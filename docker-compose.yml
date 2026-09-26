@@ -1,6 +1,8 @@
 services:
   floci:
-    image: floci/floci:latest
+    # Pinned nightly: 2.1.0 predates the apigateway timeoutInMillis fix (PR #3434).
+    # Move back to :latest once a release includes it.
+    image: floci/floci:nightly-09252026
     container_name: floci
     ports:
       - "4566:4566"

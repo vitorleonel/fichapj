@@ -6,3 +6,13 @@ module "dynamodb" {
 
   prevent_destroy = true
 }
+
+module "api" {
+  source = "../../modules/api"
+
+  name = "fichapj-cnpjs-api"
+
+  source_dir  = "${path.root}/../../../../apps/api"
+  table_names = module.dynamodb.names
+  table_arns  = module.dynamodb.arns
+}

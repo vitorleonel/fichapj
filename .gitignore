@@ -3,5 +3,6 @@
 
 # OpenTofu
 **/.terraform/*
+build/
 *.tfstate
 *.tfstate.*
