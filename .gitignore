@@ -1,2 +1,7 @@
 # Data
 /data
+
+# OpenTofu
+**/.terraform/*
+*.tfstate
+*.tfstate.*
