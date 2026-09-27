@@ -20,8 +20,9 @@ make headers GZIP=1                             # <ZipName>.csv.gz, the shape th
 make headers SRC=~/Downloads/dados DST=/tmp/out # somewhere else
 ```
 
-`out/` holds one encoding, so re-run `make headers` after pulling this change — csvs written
-before it are latin-1 and `make load` will read their accents as mojibake.
+`out/` holds one shape, so re-run `make headers` after pulling a change to `handlers.py` — csvs
+written before it carry the old header, and `make load` reads them wrong: latin-1 accents as
+mojibake, and `Estabelecimentos` without its `cnpj`.
 
 Drop the zips in `scripts/local_add_headers/in/` (gitignored, as is `out/`). A zip with no entry in
 `handlers.py` is skipped with a message, not an error.
@@ -54,6 +55,12 @@ HEADERS = {
 The key is the zip name without the extension. Digits are stripped on lookup, so a single
 `Empresas` entry covers all ten parts. Name the first column after the table's partition key in
 `infrastructure/terraform/modules/dynamodb/main.tf` — those names become the DynamoDB attributes.
+
+A key the dump only holds in pieces goes in `DERIVED`, which appends the joined value as an extra
+column: `estabelecimentos` is keyed by the full 14-digit `cnpj`, and the dump splits that across
+`cnpj_basico`/`cnpj_ordem`/`cnpj_dv`. Appending leaves the columns above at their dump positions,
+and both readers take the result from the file — the S3 import joins nothing, so a key that is not
+a column is a key the import cannot find.
 
 Every line is checked against the header's column count and the run stops at the first mismatch, so
 a wrong mapping fails loudly instead of writing a mislabelled file.
@@ -159,11 +166,8 @@ Writes go through `batch_writer`, which chunks 25 at a time and retries what Dyn
 take, and progress prints every 100k rows. Every value goes in as a string — the csv ones already
 are, `capital_social` included, which DynamoDB would reject as a number anyway.
 
-Two things still open:
+Still open:
 
 - `socios` is partitioned only on `cnpj_basico`, so a company with several partners keeps whichever
   row is written last. The table needs a sort key; which one depends on what makes a sócio unique,
   and that is worth reading off the real data first.
-- `estabelecimentos` is keyed by the full 14-digit `cnpj`, which the dump splits into
-  `cnpj_basico`/`cnpj_ordem`/`cnpj_dv`. The script joins the three into `cnpj` — the only
-  transformation it does.

@@ -53,14 +53,7 @@ def wanted(row, prefix):
     return (row["cnpj_basico"] or "").startswith(prefix)
 
 
-def to_item(key, row):
-    # estabelecimentos is keyed by the full cnpj, which the dump splits in three columns.
-    if key == "estabelecimentos":
-        row["cnpj"] = row["cnpj_basico"] + row["cnpj_ordem"] + row["cnpj_dv"]
-    return row
-
-
-def load(table, key, csv_path, prefix):
+def load(table, csv_path, prefix):
     read = loaded = 0
     started = time.monotonic()
 
@@ -73,7 +66,7 @@ def load(table, key, csv_path, prefix):
                 print(f"    {read:,} read, {loaded:,} kept…", flush=True)
             if not wanted(row, prefix):
                 continue
-            batch.put_item(Item=to_item(key, row))
+            batch.put_item(Item=row)
             loaded += 1
 
     elapsed = time.monotonic() - started
@@ -106,7 +99,7 @@ def main():
             continue
 
         table = resource.Table(table_name(client, key))
-        print(load(table, key, csv_path, args.prefix))
+        print(load(table, csv_path, args.prefix))
 
 
 if __name__ == "__main__":

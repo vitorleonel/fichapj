@@ -74,3 +74,10 @@ HEADERS = {
     "Municipios": ["codigo", "descricao"],
     "Paises": ["codigo", "descricao"],
 }
+
+# A key the dump only holds in pieces, as (column to add, the columns it is made of). The value
+# is appended after the dump's own columns, so every position above stays the dump's. Both
+# readers get it from the file — the S3 import joins nothing.
+DERIVED = {
+    "Estabelecimentos": ("cnpj", ("cnpj_basico", "cnpj_ordem", "cnpj_dv")),
+}

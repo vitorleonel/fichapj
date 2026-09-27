@@ -9,18 +9,18 @@ import gzip
 import zipfile
 from pathlib import Path
 
-from handlers import HEADERS
+from handlers import DERIVED, HEADERS
 
 HERE = Path(__file__).parent
 
 
-def header_for(name):
-    if name in HEADERS:
-        return HEADERS[name]
+def lookup(table, name):
+    if name in table:
+        return table[name]
 
     # Empresas, Socios and Estabelecimentos are published in ten numbered parts that share
     # one layout, so the digits are the only thing separating them.
-    return HEADERS.get(name.rstrip("0123456789"))
+    return table.get(name.rstrip("0123456789"))
 
 
 def records(stream):
@@ -46,9 +46,15 @@ def records(stream):
 
 def annotate(zip_path, out_dir, gz=False):
     name = zip_path.stem
-    header = header_for(name)
+    header = lookup(HEADERS, name)
     if header is None:
         return f"skipped {zip_path.name} — no header defined"
+    width = len(header)
+
+    derived, sources = lookup(DERIVED, name) or (None, ())
+    if derived:
+        columns = [header.index(source) for source in sources]
+        header = [*header, derived]
 
     with zipfile.ZipFile(zip_path) as zf:
         members = [m for m in zf.namelist() if not m.endswith("/")]
@@ -65,17 +71,26 @@ def annotate(zip_path, out_dir, gz=False):
             dst.write(";".join(header).encode() + b"\n")
             for fields, raw, line in records(src):
                 rows += 1
-                if len(fields) != len(header):
+                if len(fields) != width:
                     raise SystemExit(
                         f"{out_path.name} line {line}: {len(fields)} fields, header declares "
-                        f"{len(header)} — the mapping is wrong"
+                        f"{width} — the mapping is wrong"
                     )
                 if line % 1_000_000 == 0:
                     print(f"    {line:,} lines…", flush=True)
                 # The dump is latin-1 and the S3 import only reads UTF-8, so every record is
                 # transcoded on the way out. Doubling as the reader for `records` is the only
                 # other place the source encoding appears.
-                dst.write(raw.decode("latin-1").encode("utf-8"))
+                text = raw.decode("latin-1")
+                if derived:
+                    value = "".join(fields[i] for i in columns)
+                    # Digits, so it goes in unquoted — but a wrong column here is a key no
+                    # lookup can find, and the table it lands in cannot be written to again.
+                    if not value.isdigit() or len(value) != 14:
+                        raise SystemExit(f"{out_path.name} line {line}: {derived}={value!r}")
+                    body = text.rstrip("\r\n")
+                    text = f"{body};{value}{text[len(body):]}"
+                dst.write(text.encode("utf-8"))
 
         part_path.rename(out_path)
 
