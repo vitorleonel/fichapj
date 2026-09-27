@@ -64,7 +64,7 @@ def load(table, key, csv_path, prefix):
     read = loaded = 0
     started = time.monotonic()
 
-    with csv_path.open(encoding="latin-1", newline="") as fh, table.batch_writer() as batch:
+    with csv_path.open(encoding="utf-8", newline="") as fh, table.batch_writer() as batch:
         for row in csv.DictReader(fh, delimiter=";"):
             read += 1
             # Reported on rows read, not rows kept: with a prefix almost everything is

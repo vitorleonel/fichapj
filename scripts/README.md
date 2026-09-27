@@ -11,13 +11,17 @@ also declares boto3 there, so it needs no virtualenv.
 
 The Receita publishes its tables as `;`-separated files with **no header row** — position is the
 only thing that says which column is which. This script unzips each dump, prepends the header and
-writes `<ZipName>.csv`.
+writes `<ZipName>.csv`, transcoded from the dump's latin-1 to UTF-8.
 
 ```bash
 make headers                                    # every zip in scripts/local_add_headers/in
 make headers ONLY=Estabelecimentos              # just that one, or a single part: Socios3
+make headers GZIP=1                             # <ZipName>.csv.gz, the shape the S3 import takes
 make headers SRC=~/Downloads/dados DST=/tmp/out # somewhere else
 ```
+
+`out/` holds one encoding, so re-run `make headers` after pulling this change — csvs written
+before it are latin-1 and `make load` will read their accents as mojibake.
 
 Drop the zips in `scripts/local_add_headers/in/` (gitignored, as is `out/`). A zip with no entry in
 `handlers.py` is skipped with a message, not an error.
@@ -54,9 +58,23 @@ The key is the zip name without the extension. Digits are stripped on lookup, so
 Every line is checked against the header's column count and the run stops at the first mismatch, so
 a wrong mapping fails loudly instead of writing a mislabelled file.
 
-The dump is copied byte for byte (it is latin-1, the header is ASCII), so no accent is touched.
-Values arrive quoted — `"0111301";"Cultivo de arroz"` — and descriptions do contain `;`, so read
-the output with a CSV parser rather than splitting on the separator.
+Accents are the one thing the script does change. The dump is latin-1, DynamoDB's import only
+reads UTF-8, so every record is transcoded on the way out — quoting, separators and newlines are
+passed through untouched. Values arrive quoted — `"0111301";"Cultivo de arroz"` — and descriptions
+do contain `;`, so read the output with a CSV parser rather than splitting on the separator.
+
+### Importing into AWS
+
+The import creates a **new** table; it cannot write into an existing one, which is where the
+`-2026-09_1` suffix on the tables in `modules/dynamodb` comes from.
+
+Two settings have to match our files, and neither is the default:
+
+- `--input-format-options 'Csv={Delimiter=;}'` — the import assumes commas.
+- **Do not pass `HeaderList`.** Our files carry their own header row, which the import reads as
+  the header. Supplying one on the command line makes it read that row as an item instead.
+
+GZIP and ZSTD are both accepted; uncompressed works too, it is just a far bigger upload.
 
 ## local_load_dynamodb
 

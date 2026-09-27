@@ -8,9 +8,11 @@ CSV ?=
 ONLY ?=
 # cnpj_basico prefix, to load a slice of the base instead of all of it.
 PREFIX ?=
+# 1 writes <name>.csv.gz instead of <name>.csv, the shape the S3 import wants.
+GZIP ?=
 
 headers:
-	uv run scripts/local_add_headers/main.py $(if $(ONLY),"$(ONLY)") $(if $(SRC),--in "$(SRC)") $(if $(DST),--out "$(DST)")
+	uv run scripts/local_add_headers/main.py $(if $(ONLY),"$(ONLY)") $(if $(SRC),--in "$(SRC)") $(if $(DST),--out "$(DST)") $(if $(GZIP),--gzip)
 
 # Defaults to the output of `make headers`.
 load:

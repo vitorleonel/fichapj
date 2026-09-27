@@ -5,6 +5,7 @@
 
 import argparse
 import csv
+import gzip
 import zipfile
 from pathlib import Path
 
@@ -27,7 +28,7 @@ def records(stream):
 
     A quoted field can hold a real newline — complemento does — so a record does not always end
     at a line break. csv.reader is what finds the end; keeping the raw bytes beside it lets the
-    copy stay byte for byte.
+    record be re-encoded whole, without a csv writer touching the quoting.
     """
     raw_lines = []
 
@@ -43,7 +44,7 @@ def records(stream):
         yield fields, raw, reader.line_num
 
 
-def annotate(zip_path, out_dir):
+def annotate(zip_path, out_dir, gz=False):
     name = zip_path.stem
     header = header_for(name)
     if header is None:
@@ -54,14 +55,13 @@ def annotate(zip_path, out_dir):
         if len(members) != 1:
             raise SystemExit(f"{zip_path.name}: expected one file inside, found {len(members)}")
 
-        # The file is latin-1 and the header is ASCII, so nothing is decoded on the way through
-        # and no accent can be mangled.
-        out_path = out_dir / f"{name}.csv"
+        out_path = out_dir / f"{name}.csv{'.gz' if gz else ''}"
+        part_path = out_path.with_name(out_path.name + ".part")
         rows = 0
 
         # Written beside the real name, so a dump that dies halfway leaves a .part that
         # `make load` will not pick up and mistake for a complete table.
-        with zf.open(members[0]) as src, out_path.with_suffix(".csv.part").open("wb") as dst:
+        with zf.open(members[0]) as src, (gzip.open if gz else open)(part_path, "wb") as dst:
             dst.write(";".join(header).encode() + b"\n")
             for fields, raw, line in records(src):
                 rows += 1
@@ -72,9 +72,12 @@ def annotate(zip_path, out_dir):
                     )
                 if line % 1_000_000 == 0:
                     print(f"    {line:,} lines…", flush=True)
-                dst.write(raw)
+                # The dump is latin-1 and the S3 import only reads UTF-8, so every record is
+                # transcoded on the way out. Doubling as the reader for `records` is the only
+                # other place the source encoding appears.
+                dst.write(raw.decode("latin-1").encode("utf-8"))
 
-        out_path.with_suffix(".csv.part").rename(out_path)
+        part_path.rename(out_path)
 
     return f"{out_path.name} — {rows} rows"
 
@@ -84,6 +87,11 @@ def main():
     parser.add_argument("only", nargs="?", help="run only the zips whose name starts with this")
     parser.add_argument("--in", dest="src", type=Path, default=HERE / "in", help="folder holding the zips")
     parser.add_argument("--out", dest="dst", type=Path, default=HERE / "out", help="folder for the csvs")
+    parser.add_argument(
+        "--gzip",
+        action="store_true",
+        help="write <name>.csv.gz instead of <name>.csv, the shape the S3 import wants",
+    )
     args = parser.parse_args()
 
     # A prefix, so `Estabelecimentos` takes all ten of its parts and `Socios3` takes one.
@@ -95,7 +103,7 @@ def main():
 
     args.dst.mkdir(parents=True, exist_ok=True)
     for zip_path in zips:
-        print(annotate(zip_path, args.dst))
+        print(annotate(zip_path, args.dst, args.gzip))
 
 
 if __name__ == "__main__":
