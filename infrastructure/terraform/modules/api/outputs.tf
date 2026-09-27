@@ -12,7 +12,3 @@ output "invoke_url" {
 output "token_secret_name" {
   value = aws_secretsmanager_secret.token.name
 }
-
-output "token_secret_arn" {
-  value = aws_secretsmanager_secret.token.arn
-}

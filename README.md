@@ -75,16 +75,11 @@ Next talks to the emulator from the server, so the token never leaves the machin
 
 ```bash
 API_URL=http://localhost:4566/execute-api/<api_id>/v1   # `tofu output -raw api_id` in envs/local
-TOKEN_SECRET_ARN=fichapj-cnpjs-api-token                # the name; prod passes an ARN
-
-AWS_ENDPOINT_URL=http://localhost:4566                  # points the SDK at the emulator
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=test
-AWS_SECRET_ACCESS_KEY=test
+API_TOKEN=local-dev-token                               # the value step 3 put in the secret
 ```
 
-The token is read from Secrets Manager rather than carried in the file, which is why step 3 has to
-run first — the same bargain the authorizer makes in AWS, kept in both places.
+That is the whole file. The token only has to match what the authorizer checks, which is the
+secret container step 3 filled.
 
 ### 6. Load the data (optional)
 
@@ -102,5 +97,5 @@ or search it in the frontend.
 ## Further
 
 - [scripts/README.md](scripts/README.md) — the dump pipeline, and how to add a table to it
-- [infrastructure/terraform/README.md](infrastructure/terraform/README.md) — table imports, what
-  the API answers in each case, and how to put the site on AWS
+- [infrastructure/terraform/README.md](infrastructure/terraform/README.md) — table imports, and
+  what the API answers in each case

@@ -1,8 +1,3 @@
-import {
-  GetSecretValueCommand,
-  SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
-
 /** A code from the dump together with the description the API resolved for it. */
 export type Described = { codigo: string; descricao: string | null };
 
@@ -46,39 +41,16 @@ function required(name: string): string {
   return value;
 }
 
-const secrets = new SecretsManagerClient({});
-let token: Promise<string> | undefined;
-
-/**
- * Only the secret's identifier reaches the Terraform state, never its value — the
- * same bargain the authorizer already makes. Read once per container.
- */
-function apiToken(): Promise<string> {
-  token ??= secrets
-    .send(new GetSecretValueCommand({ SecretId: required("TOKEN_SECRET_ARN") }))
-    .then((response) => {
-      if (!response.SecretString) throw new Error("the token secret is empty");
-      return response.SecretString;
-    })
-    .catch((error) => {
-      // A failed read is not worth memoizing: the next request gets another try.
-      token = undefined;
-      throw error;
-    });
-
-  return token;
-}
-
 /**
  * The only place that knows how to reach the API. Runs on the server, so the
  * token never reaches the browser and there is no CORS to negotiate.
  *
- * A missing secret and a dead network read the same to the caller: no answer.
+ * A missing token and a dead network read the same to the caller: no answer.
  */
 async function api(path: string, revalidate: number): Promise<Response | null> {
   try {
     return await fetch(`${required("API_URL")}${path}`, {
-      headers: { Authorization: await apiToken() },
+      headers: { Authorization: required("API_TOKEN") },
       next: { revalidate },
     });
   } catch (error) {
