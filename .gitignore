@@ -1,6 +1,13 @@
 # Data
 /data
 
+# Local scripts: raw dumps in, generated csvs out
+/scripts/*/in/
+/scripts/*/out/
+
+# Python
+__pycache__/
+
 # OpenTofu
 **/.terraform/*
 build/
