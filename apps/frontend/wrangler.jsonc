@@ -10,7 +10,7 @@
 
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
 
   // The adapter calls back into this same Worker to revalidate the cache, so the
@@ -22,11 +22,25 @@
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "fichapj-opennext-cache"
-    }
+      "bucket_name": "fichapj-opennext-cache",
+    },
   ],
 
   // By default this file is the source of truth and a deploy deletes any var set in
   // the dashboard. API_URL and API_TOKEN live there and nowhere else.
-  "keep_vars": true
+  "keep_vars": true,
+
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true,
+    },
+    "traces": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "persist": true,
+    },
+  },
 }
