@@ -16,6 +16,16 @@ export const formatCnae = (value: string) =>
     ? `${value.slice(0, 4)}-${value.slice(4, 5)}/${value.slice(5)}`
     : value;
 
+/** `11` and `912345678` -> `(11) 91234-5678`. A landline keeps its 4-digit prefix.
+ *  Anything shorter than a full number is a missing one, so it reads as empty. */
+export const formatPhone = (ddd: string, number: string) => {
+  const digits = `${ddd ?? ""}${number ?? ""}`.replace(/\D/g, "");
+  if (digits.length < 10) return "";
+
+  const local = digits.slice(2);
+  return `(${digits.slice(0, 2)}) ${local.slice(0, -4)}-${local.slice(-4)}`;
+};
+
 const BRL = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",

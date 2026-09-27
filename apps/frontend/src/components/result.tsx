@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 
+import { CopyButton } from "@/components/copy-button";
 import { formatCnpj } from "@/lib/cnpj";
 import {
   formatCnae,
   formatCurrency,
   formatDate,
+  formatPhone,
   formatPostalCode,
 } from "@/lib/format";
 import { type Described, lookupCompany } from "@/services/company";
@@ -28,6 +30,22 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
       <dt className="text-sm text-zinc-500 sm:w-56 sm:shrink-0">{label}</dt>
       <dd className="text-sm text-zinc-900">{children}</dd>
     </div>
+  );
+}
+
+/** A value worth copying, or an em dash when the Receita has none. */
+function CopyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <Row label={label}>
+      {value ? (
+        <span className="inline-flex items-center gap-1.5">
+          {value}
+          <CopyButton value={value} />
+        </span>
+      ) : (
+        "—"
+      )}
+    </Row>
   );
 }
 
@@ -78,9 +96,8 @@ export async function Result({ cnpj }: { cnpj: string }) {
     formatPostalCode(estab.cep),
   ].filter(Boolean);
 
-  const phone = estab.telefone_1
-    ? `(${estab.ddd_1}) ${estab.telefone_1}`
-    : null;
+  const email = estab.correio_eletronico?.trim().toLowerCase();
+  const phone = formatPhone(estab.ddd_1, estab.telefone_1);
 
   return (
     <Shell>
@@ -113,9 +130,8 @@ export async function Result({ cnpj }: { cnpj: string }) {
           <CnaeList items={estab.cnae_fiscal_secundaria ?? []} />
         </Row>
         <Row label="Endereço">{address.join(" · ")}</Row>
-        <Row label="Contato">
-          {[estab.correio_eletronico, phone].filter(Boolean).join(" · ") || "—"}
-        </Row>
+        <CopyRow label="E-mail" value={email} />
+        <CopyRow label="Telefone" value={phone} />
       </dl>
     </Shell>
   );
