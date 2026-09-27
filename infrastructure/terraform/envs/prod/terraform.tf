@@ -16,7 +16,7 @@ terraform {
   backend "s3" {
     bucket = "fichapj-tfstate"
     key    = "envs/prod/terraform.tfstate"
-    region = "sa-east-1"
+    region = "us-east-1"
 
     use_lockfile   = true
     use_path_style = true
