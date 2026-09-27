@@ -14,7 +14,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "fichapj-cnpjs-tfstate"
+    bucket = "fichapj-tfstate"
     key    = "envs/prod/terraform.tfstate"
     region = "sa-east-1"
 
