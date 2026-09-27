@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Has to match the Worker name in the Cloudflare project, and the service below.
+  // Its absence is what made the build invent one from package.json.
+  "name": "fichapj",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-26",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  // The adapter calls back into this same Worker to revalidate the cache, so the
+  // service name is the one above.
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "fichapj" }],
+
+  // Backs `fetch(..., { next: { revalidate } })`. Without it every request misses,
+  // and the /stats scan runs on every page view.
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "fichapj-opennext-cache"
+    }
+  ],
+
+  // By default this file is the source of truth and a deploy deletes any var set in
+  // the dashboard. API_URL and API_TOKEN live there and nowhere else.
+  "keep_vars": true
+}
