@@ -1,7 +1,8 @@
 # Ficha PJ
 
 Looks up a CNPJ and returns the company plus its establishment, out of the Receita Federal open
-data. API Gateway + Lambda in front of DynamoDB, described in OpenTofu.
+data. A Next.js site in `apps/frontend`, over an API Gateway + Lambda in front of DynamoDB,
+described in OpenTofu.
 
 Locally everything runs against [floci](https://floci.io), an AWS emulator, so no AWS account is
 needed.
@@ -14,6 +15,7 @@ needed.
 | [OpenTofu](https://opentofu.org/docs/intro/install/) | creates the tables, the functions and the API |
 | [uv](https://docs.astral.sh/uv/getting-started/installation/) | runs the scripts in `scripts/` |
 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) | talks to the emulator |
+| [Node](https://nodejs.org) 20 or newer | runs the frontend in `apps/frontend` |
 
 ## Run it
 
@@ -23,9 +25,9 @@ needed.
 docker compose up -d
 ```
 
-Web UI on <http://localhost:3000>, the AWS endpoints on <http://localhost:4566>. Everything it
-stores lands in `./data` (`docker compose down && rm -rf data` is the reset — the tables go with
-it).
+The emulator's dashboard is on <http://localhost:3001> and its AWS endpoints on
+<http://localhost:4566>. Port 3000 is left free for the frontend (step 5). Everything it stores
+lands in `./data` (`docker compose down && rm -rf data` is the reset — the tables go with it).
 
 ### 2. Create the tables, the Lambdas and the API
 
@@ -56,9 +58,35 @@ curl -H "Authorization: local-dev-token" \
 ```
 
 `{"message": "CNPJ not found."}` with a `404` is the expected answer on a fresh database — the
-tables are empty until step 5. A missing or wrong token is a `403`.
+tables are empty until step 6. A missing or wrong token is a `403`.
 
-### 5. Load the data (optional)
+### 5. Run the frontend
+
+```bash
+cd apps/frontend
+npm install
+npm run dev
+```
+
+On <http://localhost:3000>. It needs the API from steps 2 and 3 — the browser talks to Next, and
+Next talks to the emulator from the server, so the token never leaves the machine.
+
+`.env.local` is not in the repo, so create it:
+
+```bash
+API_URL=http://localhost:4566/execute-api/<api_id>/v1   # `tofu output -raw api_id` in envs/local
+TOKEN_SECRET_ARN=fichapj-cnpjs-api-token                # the name; prod passes an ARN
+
+AWS_ENDPOINT_URL=http://localhost:4566                  # points the SDK at the emulator
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+```
+
+The token is read from Secrets Manager rather than carried in the file, which is why step 3 has to
+run first — the same bargain the authorizer makes in AWS, kept in both places.
+
+### 6. Load the data (optional)
 
 Back at the repo root:
 
@@ -68,10 +96,11 @@ make load      # push the csvs into the local DynamoDB
 ```
 
 Both need the dumps in `scripts/local_add_headers/in/` first — see
-[scripts/README.md](scripts/README.md) for where to get them. Then repeat step 4 with a real CNPJ.
+[scripts/README.md](scripts/README.md) for where to get them. Then repeat step 4 with a real CNPJ,
+or search it in the frontend.
 
 ## Further
 
 - [scripts/README.md](scripts/README.md) — the dump pipeline, and how to add a table to it
-- [infrastructure/terraform/README.md](infrastructure/terraform/README.md) — table imports, and
-  what the API answers in each case
+- [infrastructure/terraform/README.md](infrastructure/terraform/README.md) — table imports, what
+  the API answers in each case, and how to put the site on AWS

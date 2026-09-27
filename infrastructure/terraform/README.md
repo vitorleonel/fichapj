@@ -1,8 +1,13 @@
 # Infrastructure
 
 OpenTofu code for the CNPJ project. `modules/dynamodb` describes the tables, `modules/api` the
-gateway, the token authorizer and the Lambdas, and `modules/web` the site itself; `envs/local`
-runs against floci, `envs/prod` against real AWS.
+gateway, the token authorizer and the Lambdas, and `modules/web` the site itself.
+
+`envs/local` runs against floci and calls the first two; `envs/prod` runs against real AWS and
+calls all three. `modules/web` is deliberately absent from `envs/local` — it applies there
+cleanly, but the site cannot run: floci drops every directory with square brackets when it
+unpacks a Lambda zip, and `apps/frontend`'s only route is `[[...cnpj]]`. Until that is fixed
+upstream, the frontend is prod-only and the emulator is for the API.
 
 ## Importing the tables
 
