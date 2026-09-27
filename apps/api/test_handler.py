@@ -38,7 +38,13 @@ DESCRICOES = {
     "105": "BRASIL",
     "013": "AFEGANISTAO",
 }
-handler._descriptions = lambda table, codes: {c: DESCRICOES.get(c) for c in codes}
+# The fixed domains resolve from the map in the handler, so only the table path is stubbed.
+_real_descriptions = handler._descriptions
+handler._descriptions = lambda source, codes: (
+    _real_descriptions(source, codes)
+    if isinstance(source, dict)
+    else {c: DESCRICOES.get(c) for c in codes}
+)
 
 
 class _Table:
@@ -81,7 +87,20 @@ def test_empresa():
         "descricao": "Sociedade Empresária Limitada",
     }
     assert empresa["qualificacao_responsavel"] == {"codigo": "49", "descricao": "Sócio-Administrador"}
-    assert empresa["porte"] == "03", "a field with no lookup table is left alone"
+    assert empresa["porte"] == {
+        "codigo": "03",
+        "descricao": "EMPRESA DE PEQUENO PORTE",
+    }, "porte comes from the layout's fixed domain, not a table"
+
+
+def test_fixed_domain_without_the_code():
+    """A code the layout does not list keeps its place, like any other unknown code."""
+    assert handler._descriptions(handler.SITUACAO_CADASTRAL, ["02", "99"]) == {"02": "ATIVA"}
+
+    estab = {"situacao_cadastral": "99"}
+    handler._resolve(estab, handler.ESTABELECIMENTO_CODES)
+
+    assert estab["situacao_cadastral"] == {"codigo": "99", "descricao": None}
 
 
 def test_estabelecimento():
@@ -90,6 +109,7 @@ def test_estabelecimento():
         "cnae_fiscal_secundaria": "4761001,9999999",
         "municipio": "7089",
         "motivo_situacao_cadastral": "00",
+        "situacao_cadastral": "02",
         "pais": "",
     }
     handler._resolve(estab, handler.ESTABELECIMENTO_CODES)
@@ -97,6 +117,7 @@ def test_estabelecimento():
     assert estab["cnae_fiscal_principal"]["descricao"].startswith("Desenvolvimento")
     assert estab["municipio"] == {"codigo": "7089", "descricao": "SAO JOAQUIM DA BARRA"}
     assert estab["motivo_situacao_cadastral"] == {"codigo": "00", "descricao": "SEM MOTIVO"}
+    assert estab["situacao_cadastral"] == {"codigo": "02", "descricao": "ATIVA"}
     assert estab["pais"] == {"codigo": "105", "descricao": "BRASIL"}, "vazio é endereço no Brasil"
     assert estab["cnae_fiscal_secundaria"] == [
         {"codigo": "4761001", "descricao": None},

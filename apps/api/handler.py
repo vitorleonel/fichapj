@@ -14,12 +14,30 @@ motivos = dynamodb.Table(TABLES["motivos"])
 qualificacoes = dynamodb.Table(TABLES["qualificacoes_de_socios"])
 paises = dynamodb.Table(TABLES["paises"])
 
-# Code field -> the table holding its description, and whether the dump packs several codes into
-# the field. Resolved on read rather than at load time, so the tables stay in the shape the
-# Receita publishes and a description that changes upstream needs no reimport.
+# Code field -> where its description comes from, and whether the dump packs several codes into
+# the field. The source is either a DynamoDB table or, for the two domains the Receita fixes in
+# its layout instead of publishing as a file, a plain {codigo: descricao} map. Resolved on read
+# rather than at load time, so the tables stay in the shape the Receita publishes and a
+# description that changes upstream needs no reimport.
+PORTE = {
+    "00": "Não informado",
+    "01": "Micro empresa",
+    "03": "Empresa de pequeno porte",
+    "05": "Demais",
+}
+
+SITUACAO_CADASTRAL = {
+    "01": "NULA",
+    "02": "Ativa",
+    "03": "Suspensa",
+    "04": "Inapta",
+    "08": "Baixada",
+}
+
 EMPRESA_CODES = {
     "natureza_juridica": (naturezas, False),
     "qualificacao_responsavel": (qualificacoes, False),
+    "porte": (PORTE, False),
 }
 
 ESTABELECIMENTO_CODES = {
@@ -28,6 +46,7 @@ ESTABELECIMENTO_CODES = {
     "municipio": (municipios, False),
     "motivo_situacao_cadastral": (motivos, False),
     "pais": (paises, False),
+    "situacao_cadastral": (SITUACAO_CADASTRAL, False),
 }
 
 # The code to read when a field is empty. The dump only fills `pais` for an address abroad, so
@@ -51,18 +70,21 @@ def _codes(value):
     return [code.strip() for code in value.split(",") if code.strip()]
 
 
-def _descriptions(table, codes):
-    """{codigo: descricao} for the codes given. A code the table does not know is left out."""
+def _descriptions(source, codes):
+    """{codigo: descricao} for the codes given. A code the source does not know is left out."""
+    if isinstance(source, dict):
+        return {code: source[code] for code in codes if code in source}
+
     found = {}
     for start in range(0, len(codes), BATCH):
-        pending = {table.name: {"Keys": [{"codigo": c} for c in codes[start:start + BATCH]]}}
+        pending = {source.name: {"Keys": [{"codigo": c} for c in codes[start:start + BATCH]]}}
 
         # DynamoDB can hand back keys it did not get to. Three rounds is plenty for a batch this
         # small, and past that a partial answer beats a Lambda that never returns.
         for _ in range(3):
             response = dynamodb.batch_get_item(RequestItems=pending)
             found.update(
-                {i["codigo"]: i.get("descricao") for i in response["Responses"].get(table.name, [])}
+                {i["codigo"]: i.get("descricao") for i in response["Responses"].get(source.name, [])}
             )
             pending = response["UnprocessedKeys"]
             if not pending:
