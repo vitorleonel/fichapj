@@ -14,12 +14,18 @@ only thing that says which column is which. This script unzips each dump, prepen
 writes `<ZipName>.csv`.
 
 ```bash
-make headers                                    # scripts/local_add_headers/in and out/
+make headers                                    # every zip in scripts/local_add_headers/in
+make headers ONLY=Estabelecimentos              # just that one, or a single part: Socios3
 make headers SRC=~/Downloads/dados DST=/tmp/out # somewhere else
 ```
 
 Drop the zips in `scripts/local_add_headers/in/` (gitignored, as is `out/`). A zip with no entry in
 `handlers.py` is skipped with a message, not an error.
+
+`ONLY` is a name prefix, so `Estabelecimentos` takes all ten of its parts while `Socios3` takes
+one — that is how you watch a single dump while a new mapping is still wrong. Each output is
+written as `<name>.csv.part` and renamed only at the end, so a run that dies halfway cannot leave
+a truncated csv behind for `make load` to eat.
 
 ### Where the dumps come from
 
@@ -58,8 +64,23 @@ Reads the csvs `local_add_headers` wrote and puts them in the local DynamoDB, on
 
 ```bash
 make load                     # scripts/local_add_headers/out
+make load PREFIX=1913         # only companies whose cnpj_basico starts with 1913
 make load CSV=~/dados/csv     # somewhere else
 ```
+
+**Load a prefix, not the whole base.** Floci keeps every item in memory in all four of its
+storage modes — `persistent` only changes *when* it writes to disk, reads still come from the
+heap — and the full base is tens of millions of rows. It does not fit, and the container is
+`OOMKilled` partway through. The default Colima VM is 2 GiB and took about 166k rows before
+dying; budget roughly 9 KB of heap per row.
+
+Every big dump carries `cnpj_basico`, so one prefix cuts the *same* companies out of Empresas,
+Estabelecimentos, Socios and Simples, and a lookup returns a company with its establishments. The
+lookup tables (Cnaes, Motivos, …) have no `cnpj_basico` and always load whole. A four-digit prefix
+is around 1/10000 of the base — a few thousand rows, comfortable in 2 GiB.
+
+The cost is that every row is still read to be filtered, so a prefixed run decompresses the whole
+set. It reports rows read next to rows kept.
 
 The file name picks the table, through the `TABLES` map in `main.py`; a csv with no entry is
 skipped with a message. The real table name carries the `name_prefix`/`name_suffix` from

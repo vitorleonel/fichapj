@@ -81,13 +81,17 @@ def annotate(zip_path, out_dir):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("only", nargs="?", help="run only the zips whose name starts with this")
     parser.add_argument("--in", dest="src", type=Path, default=HERE / "in", help="folder holding the zips")
     parser.add_argument("--out", dest="dst", type=Path, default=HERE / "out", help="folder for the csvs")
     args = parser.parse_args()
 
-    zips = sorted(p for p in args.src.glob("*") if p.suffix.lower() == ".zip")
+    # A prefix, so `Estabelecimentos` takes all ten of its parts and `Socios3` takes one.
+    zips = [p for p in sorted(args.src.glob("*")) if p.suffix.lower() == ".zip"]
+    if args.only:
+        zips = [p for p in zips if p.stem.lower().startswith(args.only.lower())]
     if not zips:
-        raise SystemExit(f"no .zip in {args.src}")
+        raise SystemExit(f"no .zip in {args.src}" + (f" starting with {args.only}" if args.only else ""))
 
     args.dst.mkdir(parents=True, exist_ok=True)
     for zip_path in zips:

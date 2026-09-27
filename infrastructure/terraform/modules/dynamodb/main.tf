@@ -9,6 +9,7 @@ locals {
     "qualificacoes_de_socios" = "codigo",
     "naturezas_juridicas" = "codigo",
     "cnaes" = "codigo",
+    "motivos" = "codigo",
   }
 }
 

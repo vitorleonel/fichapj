@@ -67,6 +67,7 @@ HEADERS = {
         "qualificacao_representante_legal",
         "faixa_etaria",
     ],
+    "Motivos": ["codigo", "descricao"],
     "Cnaes": ["codigo", "descricao"],
     "Naturezas": ["codigo", "descricao"],
     "Qualificacoes": ["codigo", "descricao"],
