@@ -16,3 +16,16 @@ module "api" {
   table_names = module.dynamodb.names
   table_arns  = module.dynamodb.arns
 }
+
+module "web" {
+  source = "../../modules/web"
+
+  name = "fichapj-cnpjs-web"
+
+  # Terraform zips what the OpenNext build already wrote, so run
+  # `npm run build:opennext` in apps/frontend before the apply.
+  source_dir = "${path.root}/../../../../apps/frontend/.open-next"
+
+  api_url          = module.api.invoke_url
+  token_secret_arn = module.api.token_secret_arn
+}

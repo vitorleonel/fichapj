@@ -1,8 +1,8 @@
 # Infrastructure
 
-OpenTofu code for the CNPJ project. `modules/dynamodb` describes the tables and `modules/api` the
-gateway, the token authorizer and the Lambdas; `envs/local` runs against floci, `envs/prod` against
-real AWS (tables only, so far).
+OpenTofu code for the CNPJ project. `modules/dynamodb` describes the tables, `modules/api` the
+gateway, the token authorizer and the Lambdas, and `modules/web` the site itself; `envs/local`
+runs against floci, `envs/prod` against real AWS.
 
 ## Importing the tables
 
@@ -71,6 +71,50 @@ gateway itself, with its overridden `404 {"message": "not found"}`.
 The `<api_id>.execute-api.localhost.floci.io` host form does not route in floci — it falls through
 to S3 and answers `NoSuchBucket`.
 
-Both Lambdas share the `apps/api` directory — edit it and `tofu apply` re-packages and updates them.
-`apps/api/test_handler.py` checks the code resolution against a stub table, no AWS involved:
-`uv run apps/api/test_handler.py`.
+The three functions share the `apps/api` directory — edit it and `tofu apply` re-packages and
+updates them. `apps/api/test_handler.py` checks the code resolution against a stub table, no AWS
+involved: `uv run apps/api/test_handler.py`.
+
+## Deploying the site
+
+`modules/web` hosts `apps/frontend`. OpenNext turns the Next.js build into a Lambda, and
+CloudFront puts S3 in front of the static assets and a function URL in front of everything else.
+The site calls the API through the gateway, so `envs/prod` applies both modules together.
+
+Order matters — Terraform only zips what the build already wrote:
+
+```bash
+cd apps/frontend && npm run build:opennext
+
+cd infrastructure/terraform/envs/prod
+tofu init && tofu apply
+tofu output -raw site_url
+```
+
+Re-run the build before every apply that follows a frontend change; `source_code_hash` sees the
+zip, not the source behind it. `tofu init -backend=false && tofu validate` checks the HCL without
+credentials or a state bucket, which is the cheapest way to catch a typo here.
+
+The site's Lambda reads the token from Secrets Manager at request time, the same way the
+authorizer does, so only the secret's ARN travels through Terraform and the value still never
+reaches the state file. Populating it is the plain command — no `--endpoint-url`, real
+credentials:
+
+```bash
+aws secretsmanager put-secret-value \
+  --secret-id "$(tofu output -raw token_secret_name)" --secret-string '<the token>'
+```
+
+`envs/prod` creates the ten tables but does not fill them. An empty base is a successful deploy
+that 404s every lookup — read the warning at the top of `scripts/README.md` before importing
+anything.
+
+Two things inherited from the floci setup to watch on the first real `tofu init`: the state
+backend sets `use_path_style = true`, and the tables carry `prevent_destroy = true`. The first is
+usually harmless against real S3 but nobody would write it by hand; the second means a mistake in
+the table map fails the apply instead of dropping the data.
+
+For local development the frontend now reads the token from floci's Secrets Manager, so
+`apps/frontend/.env.local` carries `TOKEN_SECRET_ARN` plus `AWS_ENDPOINT_URL` and fake
+credentials — see the comments in that file. It is a name where prod passes an ARN;
+`get_secret_value` takes either.
