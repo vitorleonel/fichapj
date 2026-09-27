@@ -51,11 +51,23 @@ curl -H "Authorization: local-dev-token" \
 ```
 
 `GET /v1/cnpj/{cnpj}` returns `{"empresa": ..., "estabelecimento": ...}`, one lookup per table.
+
+A field holding a code is swapped for `{codigo, descricao}` — a list of them when the dump packs
+several into one field, as `cnae_fiscal_secundaria` does. `EMPRESA_CODES` and
+`ESTABELECIMENTO_CODES` in `apps/api/handler.py` name which fields those are and where each
+description lives; the rest come through untouched. A code with no row keeps its place with a
+null `descricao`, so a gap in the reference data never drops something the company does have.
+`DEFAULT_CODES` holds the code to read when a field is empty — `pais` is only filled for an
+address abroad, so an empty one resolves to Brazil.
+
 Errors are `{"message": ...}` — the same shape the gateway uses — with `400` for a malformed cnpj,
-`403` for a bad or missing token, and `404` for an unknown cnpj. Any other path is refused by the
-gateway itself, with its `403 Missing Authentication Token`.
+`403` for a bad or missing token, and `404` for an unknown cnpj — a row missing from either the
+`empresas` or the `estabelecimentos` side counts as unknown. Any other path is refused by the
+gateway itself, with its overridden `404 {"message": "not found"}`.
 
 The `<api_id>.execute-api.localhost.floci.io` host form does not route in floci — it falls through
 to S3 and answers `NoSuchBucket`.
 
 Both Lambdas share the `apps/api` directory — edit it and `tofu apply` re-packages and updates them.
+`apps/api/test_handler.py` checks the code resolution against a stub table, no AWS involved:
+`uv run apps/api/test_handler.py`.
