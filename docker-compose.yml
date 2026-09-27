@@ -17,7 +17,7 @@ services:
     image: ghcr.io/ofsazib/floci-dash:latest
     container_name: floci-dash
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       FLOCI_URL: http://floci:4566
     depends_on:

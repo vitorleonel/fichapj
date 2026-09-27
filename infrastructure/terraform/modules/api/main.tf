@@ -28,6 +28,8 @@ data "archive_file" "lambda" {
   type        = "zip"
   source_dir  = var.source_dir
   output_path = "${path.root}/build/${var.name}.zip"
+
+  excludes = ["test_handler.py", "__pycache__", "*.pyc"]
 }
 
 resource "aws_iam_role" "lambda" {
@@ -62,7 +64,7 @@ resource "aws_iam_role_policy" "lambda" {
       },
       {
         Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:Query"]
+        Action   = ["dynamodb:GetItem", "dynamodb:BatchGetItem"]
         Resource = values(var.table_arns)
       },
     ]
@@ -78,6 +80,9 @@ resource "aws_lambda_function" "main" {
   runtime          = "python3.14"
   filename         = data.archive_file.lambda.output_path
   source_code_hash = data.archive_file.lambda.output_base64sha256
+
+  # The default 3s is below what a cold authorizer needs for its secret read.
+  timeout = 10
 
   environment {
     variables = merge(var.lambda_environment, each.value.env)
