@@ -1,8 +1,8 @@
 locals {
   # The authorizer is a function of its own so the gateway turns the request away
-  # before the API functions run. One function per route, each writing down only the
-  # permissions its own route needs: the one that reads a single row never holds a
-  # scan, and the one that scans can never read the token.
+  # before the API function runs. Each function writes down only the permissions its
+  # own route needs: the lookup reads a single row and never the token, the authorizer
+  # reads the token and can never touch a table.
   functions = {
     authorizer = {
       handler = "authorizer.handler"
@@ -20,15 +20,6 @@ locals {
       policy = [{
         Effect   = "Allow"
         Action   = ["dynamodb:GetItem", "dynamodb:BatchGetItem"]
-        Resource = values(var.table_arns)
-      }]
-    }
-    stats = {
-      handler = "stats.handler"
-      env     = { TABLES = jsonencode(var.table_names) }
-      policy = [{
-        Effect   = "Allow"
-        Action   = ["dynamodb:Scan"]
         Resource = values(var.table_arns)
       }]
     }
@@ -177,37 +168,6 @@ resource "aws_api_gateway_gateway_response" "not_found" {
   }
 }
 
-resource "aws_api_gateway_resource" "stats" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
-  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
-  path_part   = "stats"
-}
-
-resource "aws_api_gateway_method" "stats" {
-  rest_api_id   = aws_api_gateway_rest_api.main.id
-  resource_id   = aws_api_gateway_resource.stats.id
-  http_method   = "GET"
-  authorization = "CUSTOM"
-  authorizer_id = aws_api_gateway_authorizer.token.id
-}
-
-resource "aws_api_gateway_integration" "stats" {
-  rest_api_id             = aws_api_gateway_rest_api.main.id
-  resource_id             = aws_api_gateway_resource.stats.id
-  http_method             = aws_api_gateway_method.stats.http_method
-  type                    = "AWS_PROXY"
-  integration_http_method = "POST"
-  uri                     = aws_lambda_function.main["stats"].invoke_arn
-}
-
-resource "aws_lambda_permission" "stats" {
-  statement_id  = "apigateway-stats"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.main["stats"].function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/GET/stats"
-}
-
 # API Gateway only redeploys when this changes, never on its own.
 resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
@@ -219,9 +179,6 @@ resource "aws_api_gateway_deployment" "main" {
       aws_api_gateway_integration.cnpj.id,
       aws_api_gateway_authorizer.token.id,
       aws_api_gateway_gateway_response.not_found.id,
-      aws_api_gateway_resource.stats.id,
-      aws_api_gateway_method.stats.id,
-      aws_api_gateway_integration.stats.id,
     ]))
   }
 

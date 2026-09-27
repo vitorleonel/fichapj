@@ -1,11 +1,11 @@
-import { Suspense } from "react";
-
-import { ActiveCount } from "@/components/active-count";
 import { CnpjForm } from "@/components/cnpj-form";
 import { Logo } from "@/components/logo";
 import { Spotlight } from "@/components/spotlight";
+import { countActive } from "@/services/company";
 
 export function Hero({ cnpj }: { cnpj: string }) {
+  const active = countActive();
+
   return (
     <section className="relative flex min-h-dvh flex-col overflow-hidden">
       <div
@@ -26,9 +26,12 @@ export function Hero({ cnpj }: { cnpj: string }) {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
           <Logo />
 
-          <Suspense fallback={null}>
-            <ActiveCount />
-          </Suspense>
+          <p className="text-base text-zinc-500">
+            <span className="font-medium text-zinc-900 tabular-nums">
+              {active.toLocaleString("pt-BR")}
+            </span>{" "}
+            {active === 1 ? "empresa ativa" : "empresas ativas"}
+          </p>
         </div>
       </header>
 

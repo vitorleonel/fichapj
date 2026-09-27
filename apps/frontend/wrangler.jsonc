@@ -17,8 +17,8 @@
   // service name is the one above.
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "fichapj" }],
 
-  // Backs `fetch(..., { next: { revalidate } })`. Without it every request misses,
-  // and the /stats scan runs on every page view.
+  // Backs `fetch(..., { next: { revalidate } })`. Without it every request misses and
+  // every lookup reaches the API.
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
@@ -27,7 +27,7 @@
   ],
 
   // By default this file is the source of truth and a deploy deletes any var set in
-  // the dashboard. API_URL and API_TOKEN live there and nowhere else.
+  // the dashboard. API_URL, API_TOKEN and ACTIVE_COUNT live there and nowhere else.
   "keep_vars": true,
 
   "observability": {

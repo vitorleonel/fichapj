@@ -75,16 +75,9 @@ export async function lookupCompany(cnpj: string): Promise<LookupResult> {
   return { ok: true, company };
 }
 
-/** Active count for the navbar, or null — a missing number is not an error page. */
-export async function countActive(): Promise<number | null> {
-  // The count only moves on a reimport, and the API scans a table for it.
-  const response = await api("/stats", 3600);
+export function countActive(): number {
+  const count = Number(required("ACTIVE_COUNT"));
+  if (!Number.isFinite(count)) throw new Error("ACTIVE_COUNT is not a number");
 
-  if (!response?.ok) return null;
-
-  const stats = await response.json().catch(() => null);
-
-  return typeof stats?.active_companies === "number"
-    ? stats.active_companies
-    : null;
+  return count;
 }

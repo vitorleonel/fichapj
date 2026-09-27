@@ -76,10 +76,16 @@ Next talks to the emulator from the server, so the token never leaves the machin
 ```bash
 API_URL=http://localhost:4566/execute-api/<api_id>/v1   # `tofu output -raw api_id` in envs/local
 API_TOKEN=local-dev-token                               # the value step 3 put in the secret
+ACTIVE_COUNT=42                                         # the navbar number, see below
 ```
 
-That is the whole file. The token only has to match what the authorizer checks, which is the
-secret container step 3 filled.
+The token only has to match what the authorizer checks, which is the secret container step 3
+filled.
+
+`ACTIVE_COUNT` is the number in the navbar, and all three are required — a missing one fails the
+page, so the mistake shows up on the first render instead of leaving a hole in it.
+[scripts/README.md](scripts/README.md) has the command that derives the count from the dump; locally,
+run it against your own `out/` and use whatever it prints.
 
 ### 6. Load the data (optional)
 

@@ -76,6 +76,56 @@ Two settings have to match our files, and neither is the default:
 
 GZIP and ZSTD are both accepted; uncompressed works too, it is just a far bigger upload.
 
+### Counting the active base
+
+The navbar shows a number of active establishments. DynamoDB has no cheap exact count — `Scan` with
+`Select=COUNT`, a `ProjectionExpression` and a `FilterExpression` all cost the same as reading every
+row, because the bill follows what was read, not what came back. So the number is counted here, once
+per import, and set as a fixed value.
+
+```bash
+python3 -c '
+import csv, gzip, sys
+n = 0
+nuls = [0]
+
+def clean(f):
+    for line in f:
+        if "\x00" in line:
+            nuls[0] += 1
+            line = line.replace("\x00", "")
+        yield line
+
+for p in sys.argv[1:]:
+    op = gzip.open if p.endswith(".gz") else open
+    rows = hits = 0
+    with op(p, "rt", encoding="utf-8", newline="") as f:
+        for r in csv.DictReader(clean(f), delimiter=";"):
+            rows += 1
+            if r["situacao_cadastral"] == "02":
+                hits += 1
+    n += hits
+    print(f"{p}: {rows:,} rows, {hits:,} active", file=sys.stderr)
+print(f"rows with NUL: {nuls[0]:,}", file=sys.stderr)
+print(n)
+' out/Estabelecimentos*.csv.gz
+```
+
+A real csv parser is not optional: values arrive quoted, and `complemento` holds both `;` and
+newlines — splitting on the separator would shift every column after it.
+
+These files carry NUL bytes, and `csv` raises `_csv.Error: line contains NUL` rather than skipping
+them, so `clean()` drops them on the way through. Removing a byte is not moving a column — the `;`
+separators stay where they were. The `rows with NUL` line is worth reading: nothing downstream
+strips those, so on import they land inside the DynamoDB attribute.
+
+The result goes in `ACTIVE_COUNT`, a plain variable in the Cloudflare dashboard for the deployed site
+and a line in `.env.local` locally. It is required — the page fails without it, so a missing value
+shows up on the first render instead of silently dropping the counter.
+
+`ImportedItemCount` from `describe-import` is not a substitute — it counts every row imported,
+active or not.
+
 ## local_load_dynamodb
 
 Reads the csvs `local_add_headers` wrote and puts them in the local DynamoDB, one table per file:

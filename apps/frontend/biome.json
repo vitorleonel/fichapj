@@ -9,6 +9,12 @@
     "ignoreUnknown": true,
     "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
   },
+  "overrides": [
+    {
+      "includes": ["**/*.jsonc"],
+      "json": { "formatter": { "trailingCommas": "all" } }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
