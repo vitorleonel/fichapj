@@ -55,8 +55,11 @@ curl -H "Authorization: local-dev-token" \
 A field holding a code is swapped for `{codigo, descricao}` — a list of them when the dump packs
 several into one field, as `cnae_fiscal_secundaria` does. `EMPRESA_CODES` and
 `ESTABELECIMENTO_CODES` in `apps/api/handler.py` name which fields those are and where each
-description lives; the rest come through untouched. A code with no row keeps its place with a
-null `descricao`, so a gap in the reference data never drops something the company does have.
+description lives; the rest come through untouched. A source is a DynamoDB table, or a plain
+map for the two domains the Receita fixes in its layout instead of publishing as a file —
+`PORTE` and `SITUACAO_CADASTRAL`, the latter covering the second `situacao_cadastral` code
+alongside the `motivos` table's *reason*. A code the source does not know keeps its place with
+a null `descricao`, so a gap in the reference data never drops something the company does have.
 `DEFAULT_CODES` holds the code to read when a field is empty — `pais` is only filled for an
 address abroad, so an empty one resolves to Brazil.
 

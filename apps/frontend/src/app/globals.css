@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Keeps scrollbars and form controls light when the OS is in dark mode. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #ffffff;
+  color: #171717;
+  font-family: var(--font-sans);
+}
+
+/* ---------------------------------------------------------------------------
+   Hero backdrop. Four layers, all compositor-friendly transforms or a single
+   background-position tick, and all periodic so the loops have no seam.
+   --------------------------------------------------------------------------- */
+
+/* Faint grid, drifting one tile per cycle so the loop is invisible. */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, #f1f1f3 1px, transparent 1px),
+    linear-gradient(to bottom, #f1f1f3 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(
+    70rem 42rem at 50% 0%,
+    #000,
+    transparent 75%
+  );
+  mask-image: radial-gradient(70rem 42rem at 50% 0%, #000, transparent 75%);
+  animation: grid-drift 26s linear infinite;
+}
+
+@keyframes grid-drift {
+  to {
+    background-position: 64px 64px;
+  }
+}
+
+/* Three pale blobs, blurred hard enough to read as one soft aurora. */
+.hero-aurora span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.hero-aurora span:nth-child(1) {
+  width: 42rem;
+  height: 42rem;
+  top: -20rem;
+  left: -12rem;
+  background: #c7d2fe;
+  animation: drift-a 23s ease-in-out infinite;
+}
+
+.hero-aurora span:nth-child(2) {
+  width: 36rem;
+  height: 36rem;
+  top: -16rem;
+  right: -10rem;
+  background: #bae6fd;
+  animation: drift-b 29s ease-in-out infinite;
+}
+
+.hero-aurora span:nth-child(3) {
+  width: 30rem;
+  height: 30rem;
+  top: 6rem;
+  left: 38%;
+  background: #ddd6fe;
+  animation: drift-c 19s ease-in-out infinite;
+}
+
+@keyframes drift-a {
+  50% {
+    transform: translate3d(7rem, 4rem, 0) scale(1.14);
+  }
+}
+
+@keyframes drift-b {
+  50% {
+    transform: translate3d(-6rem, 5rem, 0) scale(1.1);
+  }
+}
+
+@keyframes drift-c {
+  50% {
+    transform: translate3d(4rem, -5rem, 0) scale(1.16);
+  }
+}
+
+/* Follows the pointer. The component writes --spot-x/--spot-y. */
+.hero-spotlight {
+  background: radial-gradient(
+    26rem 26rem at var(--spot-x, 50%) var(--spot-y, 35%),
+    rgb(99 102 241 / 0.12),
+    transparent 70%
+  );
+}
+
+/* Staggered entrance. */
+
+.hero-stagger > * {
+  animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.hero-stagger > *:nth-child(2) {
+  animation-delay: 0.14s;
+}
+.hero-stagger > *:nth-child(3) {
+  animation-delay: 0.23s;
+}
+.hero-stagger > *:nth-child(4) {
+  animation-delay: 0.32s;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-grid,
+  .hero-aurora span,
+  .hero-stagger > * {
+    animation: none;
+  }
+}
