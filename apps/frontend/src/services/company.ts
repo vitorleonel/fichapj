@@ -48,7 +48,7 @@ function required(name: string): string {
 export async function lookupCompany(cnpj: string): Promise<LookupResult> {
   const response = await fetch(`${required("API_URL")}/cnpj/${cnpj}`, {
     headers: { Authorization: required("API_TOKEN") },
-    cache: "no-store",
+    next: { revalidate: 60 },
   }).catch(() => null);
 
   if (!response) return { ok: false, status: 503 };
@@ -59,4 +59,21 @@ export async function lookupCompany(cnpj: string): Promise<LookupResult> {
   if (!company) return { ok: false, status: 502 };
 
   return { ok: true, company };
+}
+
+/** Active count for the navbar, or null — a missing number is not an error page. */
+export async function countActive(): Promise<number | null> {
+  const response = await fetch(`${required("API_URL")}/stats`, {
+    headers: { Authorization: required("API_TOKEN") },
+    // The count only moves on a reimport, and the API scans a table for it.
+    next: { revalidate: 3600 },
+  }).catch(() => null);
+
+  if (!response?.ok) return null;
+
+  const stats = await response.json().catch(() => null);
+
+  return typeof stats?.active_companies === "number"
+    ? stats.active_companies
+    : null;
 }

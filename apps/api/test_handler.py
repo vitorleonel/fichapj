@@ -89,13 +89,13 @@ def test_empresa():
     assert empresa["qualificacao_responsavel"] == {"codigo": "49", "descricao": "Sócio-Administrador"}
     assert empresa["porte"] == {
         "codigo": "03",
-        "descricao": "EMPRESA DE PEQUENO PORTE",
+        "descricao": "Empresa de pequeno porte",
     }, "porte comes from the layout's fixed domain, not a table"
 
 
 def test_fixed_domain_without_the_code():
     """A code the layout does not list keeps its place, like any other unknown code."""
-    assert handler._descriptions(handler.SITUACAO_CADASTRAL, ["02", "99"]) == {"02": "ATIVA"}
+    assert handler._descriptions(handler.SITUACAO_CADASTRAL, ["02", "99"]) == {"02": "Ativa"}
 
     estab = {"situacao_cadastral": "99"}
     handler._resolve(estab, handler.ESTABELECIMENTO_CODES)
@@ -117,7 +117,7 @@ def test_estabelecimento():
     assert estab["cnae_fiscal_principal"]["descricao"].startswith("Desenvolvimento")
     assert estab["municipio"] == {"codigo": "7089", "descricao": "SAO JOAQUIM DA BARRA"}
     assert estab["motivo_situacao_cadastral"] == {"codigo": "00", "descricao": "SEM MOTIVO"}
-    assert estab["situacao_cadastral"] == {"codigo": "02", "descricao": "ATIVA"}
+    assert estab["situacao_cadastral"] == {"codigo": "02", "descricao": "Ativa"}
     assert estab["pais"] == {"codigo": "105", "descricao": "BRASIL"}, "vazio é endereço no Brasil"
     assert estab["cnae_fiscal_secundaria"] == [
         {"codigo": "4761001", "descricao": None},

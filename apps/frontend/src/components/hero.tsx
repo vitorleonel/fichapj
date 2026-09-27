@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+
+import { ActiveCount } from "@/components/active-count";
 import { CnpjForm } from "@/components/cnpj-form";
 import { Logo } from "@/components/logo";
 import { Spotlight } from "@/components/spotlight";
@@ -20,8 +23,12 @@ export function Hero({ cnpj }: { cnpj: string }) {
       <Spotlight />
 
       <header className="relative">
-        <div className="mx-auto flex w-full max-w-6xl items-center px-6 py-7 sm:px-10">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
           <Logo />
+
+          <Suspense fallback={null}>
+            <ActiveCount />
+          </Suspense>
         </div>
       </header>
 

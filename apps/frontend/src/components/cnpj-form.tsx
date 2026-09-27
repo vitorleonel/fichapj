@@ -18,7 +18,10 @@ export function CnpjForm({ initialCnpj }: { initialCnpj: string }) {
         event.preventDefault();
         if (!ready) return;
 
-        // The hero stays put, so let ScrollTo do the only scrolling.
+        document
+          .getElementById("result")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
         router.push(`/${onlyDigits(value)}`, { scroll: false });
       }}
     >
