@@ -57,10 +57,20 @@ The key is the zip name without the extension. Digits are stripped on lookup, so
 `infrastructure/terraform/modules/dynamodb/main.tf` — those names become the DynamoDB attributes.
 
 A key the dump only holds in pieces goes in `DERIVED`, which appends the joined value as an extra
-column: `estabelecimentos` is keyed by the full 14-digit `cnpj`, and the dump splits that across
+column: `estabelecimentos` is keyed by the full 14-character `cnpj`, and the dump splits that across
 `cnpj_basico`/`cnpj_ordem`/`cnpj_dv`. Appending leaves the columns above at their dump positions,
 and both readers take the result from the file — the S3 import joins nothing, so a key that is not
 a column is a key the import cannot find.
+
+`socios` derives one for the other reason a key is needed: its partition repeats. A company has
+several sócios, the import writes one item per row, and DynamoDB takes one item per partition
+value unless a sort key tells them apart — so without it each partner overwrites the last. The
+sort key is `cnpj_cpf_socio`, `nome_socio`, `qualificacao_socio` and `data_entrada_sociedade`,
+pipe-joined; the entry date is what separates the same person's two stints. On the 2026-09 dump
+that leaves 5 keys shared by two rows out of 28.3M, all of them foreign sócios
+(`identificador_socio = 3`, no `cnpj_cpf_socio`) that the Receita lists once per
+`representante_legal`, plus 115 keys holding the same row twice — those cost nothing, the second
+write puts back what the first put there.
 
 Every line is checked against the header's column count and the run stops at the first mismatch, so
 a wrong mapping fails loudly instead of writing a mislabelled file.
@@ -166,8 +176,6 @@ Writes go through `batch_writer`, which chunks 25 at a time and retries what Dyn
 take, and progress prints every 100k rows. Every value goes in as a string — the csv ones already
 are, `capital_social` included, which DynamoDB would reject as a number anyway.
 
-Still open:
-
-- `socios` is partitioned only on `cnpj_basico`, so a company with several partners keeps whichever
-  row is written last. The table needs a sort key; which one depends on what makes a sócio unique,
-  and that is worth reading off the real data first.
+`batch_writer` sends 25 at a time, and DynamoDB refuses a batch carrying the same key twice — so a
+prefixed run over `socios` can trip on a repeated key even though the write itself would be
+harmless.

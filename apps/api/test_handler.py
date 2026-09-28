@@ -66,6 +66,23 @@ def test_not_found():
     assert handler.handler(event, None)["statusCode"] == 404, "estabelecimento without empresa"
 
 
+def test_cnpj_shape():
+    """Twelve alphanumeric positions and two numeric check digits, since July 2026."""
+    handler.empresas = handler.estabelecimentos = _Table(None)
+
+    def status(cnpj):
+        return handler.handler({"pathParameters": {"cnpj": cnpj}}, None)["statusCode"]
+
+    # A 404 means it passed the shape and went looking; a 400 means it never got there.
+    assert status("39581412000106") == 404, "the numeric ones issued before still go through"
+    assert status("12ABC34501DE35") == 404, "letters above the check digits"
+    assert status("12abc34501de35") == 404, "and lower case finds the same row"
+
+    assert status("12ABC34501DE3") == 400, "short"
+    assert status("12ABC34501DE3X") == 400, "a letter in a check digit"
+    assert status("12.ABC.345/01DE-35") == 400, "punctuation is the form's job, not the api's"
+
+
 def test_codes():
     assert handler._codes("4761001,5811500") == ["4761001", "5811500"]
     assert handler._codes("4761001, 5811500") == ["4761001", "5811500"]

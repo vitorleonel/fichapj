@@ -51,7 +51,7 @@ def annotate(zip_path, out_dir, gz=False):
         return f"skipped {zip_path.name} — no header defined"
     width = len(header)
 
-    derived, sources = lookup(DERIVED, name) or (None, ())
+    derived, separator, sources = lookup(DERIVED, name) or (None, "", ())
     if derived:
         columns = [header.index(source) for source in sources]
         header = [*header, derived]
@@ -83,10 +83,11 @@ def annotate(zip_path, out_dir, gz=False):
                 # other place the source encoding appears.
                 text = raw.decode("latin-1")
                 if derived:
-                    value = "".join(fields[i] for i in columns)
-                    # Digits, so it goes in unquoted — but a wrong column here is a key no
-                    # lookup can find, and the table it lands in cannot be written to again.
-                    if not value.isdigit() or len(value) != 14:
+                    parts = [fields[i] for i in columns]
+                    value = separator.join(parts)
+                    # A key nothing can tell apart from another is a row the table keeps where
+                    # no lookup reaches it, and a reimport to find out.
+                    if not value or any(separator and separator in part for part in parts):
                         raise SystemExit(f"{out_path.name} line {line}: {derived}={value!r}")
                     body = text.rstrip("\r\n")
                     text = f"{body};{value}{text[len(body):]}"

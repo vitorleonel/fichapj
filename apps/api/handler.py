@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import boto3
 
@@ -55,6 +56,10 @@ DEFAULT_CODES = {"pais": "105"}
 
 # batch_get_item takes 100 keys, and refuses more instead of truncating.
 BATCH = 100
+
+# The Receita's alphanumeric cnpj, in force since July 2026: twelve alphanumeric positions and
+# two numeric check digits. The numeric ones issued before it still fit — digits are alphanumeric.
+CNPJ = re.compile(r"[0-9A-Z]{12}[0-9]{2}")
 
 
 def _response(status, body):
@@ -118,9 +123,10 @@ def _resolve(item, fields):
 
 
 def handler(event, context):
-    cnpj = (event.get("pathParameters") or {}).get("cnpj", "")
+    # Uppercased, so a cnpj typed in lower case still finds the row the dump stored.
+    cnpj = (event.get("pathParameters") or {}).get("cnpj", "").upper()
 
-    if len(cnpj) != 14 or not cnpj.isdigit():
+    if not CNPJ.fullmatch(cnpj):
         return _response(400, {"message": "You need to provide a valid CNPJ."})
 
     estabelecimento = estabelecimentos.get_item(Key={"cnpj": cnpj}).get("Item")

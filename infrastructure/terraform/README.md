@@ -25,8 +25,13 @@ tofu import 'module.dynamodb.aws_dynamodb_table.main["cnaes"]' fichapj-cnpjs-cna
 tofu import 'module.dynamodb.aws_dynamodb_table.main["motivos"]' fichapj-cnpjs-motivos-2026-09_1
 ```
 
+`socios` is the one table with a sort key, so the import that creates it declares both keys —
+`cnpj_basico` and `socio` — not just the partition. Everywhere else the partition is the key.
+
 Run from the env directory, after `tofu init`. Quotes matter — the shell eats the brackets.
-Each env has its own state, so the imports repeat per env.
+Each env has its own state, so the imports repeat per env — and only once per env: a second run
+answers `Resource already managed by OpenTofu` for every table, which is the state saying it is
+already done, not something to fix.
 
 `tofu plan` must end in `No changes.` A `~ update in-place` is harmless to apply; `-/+ replace`
 means the name or partition key disagrees with `locals.tables` — fix the map and re-import

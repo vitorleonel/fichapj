@@ -13,3 +13,6 @@ __pycache__/
 build/
 *.tfstate
 *.tfstate.*
+
+# Files
+.DS_Store

@@ -75,9 +75,16 @@ HEADERS = {
     "Paises": ["codigo", "descricao"],
 }
 
-# A key the dump only holds in pieces, as (column to add, the columns it is made of). The value
-# is appended after the dump's own columns, so every position above stays the dump's. Both
-# readers get it from the file — the S3 import joins nothing.
+# Columns the dump only holds in pieces, as (name, separator, parts). The value is appended
+# after the dump's own columns, so every position above stays the dump's. It goes in the file
+# because neither reader joins anything of its own — the S3 import reads what is there.
 DERIVED = {
-    "Estabelecimentos": ("cnpj", ("cnpj_basico", "cnpj_ordem", "cnpj_dv")),
+    "Estabelecimentos": ("cnpj", "", ("cnpj_basico", "cnpj_ordem", "cnpj_dv")),
+    # A company has several sócios, and the same person can hold more than one qualificação or
+    # leave and rejoin, so cnpj_basico alone does not identify a row. This is the sort key.
+    "Socios": (
+        "socio",
+        "|",
+        ("cnpj_cpf_socio", "nome_socio", "qualificacao_socio", "data_entrada_sociedade"),
+    ),
 }
