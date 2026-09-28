@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { formatCnpj, isComplete, onlyDigits } from "@/lib/cnpj";
+import { formatCnpj, isComplete, onlyAlnum } from "@/lib/cnpj";
 
 export function CnpjForm({ initialCnpj }: { initialCnpj: string }) {
   const router = useRouter();
@@ -22,13 +22,14 @@ export function CnpjForm({ initialCnpj }: { initialCnpj: string }) {
           .getElementById("result")
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-        router.push(`/${onlyDigits(value)}`, { scroll: false });
+        router.push(`/${onlyAlnum(value)}`, { scroll: false });
       }}
     >
       <input
         aria-label="CNPJ"
+        autoCapitalize="characters"
         autoComplete="off"
-        inputMode="numeric"
+        spellCheck={false}
         placeholder="00.000.000/0000-00"
         value={value}
         onChange={(event) => setValue(formatCnpj(event.target.value))}
