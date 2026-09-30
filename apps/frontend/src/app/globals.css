@@ -5,6 +5,18 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Elevation, one shadow per level rather than a pile of them, so a card and the
+   thing floating over it read as two different heights. */
+@theme {
+  --shadow-card:
+    0 1px 2px -1px rgb(9 9 11 / 0.06), 0 4px 16px -6px rgb(9 9 11 / 0.08);
+  --shadow-lift:
+    0 2px 4px -2px rgb(9 9 11 / 0.08), 0 16px 40px -12px rgb(9 9 11 / 0.16);
+  /* Wide and soft, for the one card that carries a whole page. */
+  --shadow-float:
+    0 1px 1px rgb(22 20 44 / 0.04), 0 24px 60px -24px rgb(22 20 44 / 0.22);
+}
+
 /* Keeps scrollbars and form controls light when the OS is in dark mode. */
 :root {
   color-scheme: light;
@@ -16,91 +28,46 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Tailwind v4 leaves a button on the default cursor. A button is a thing you click,
+   and this covers every one of them rather than each button asking for it again. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 /* ---------------------------------------------------------------------------
-   Hero backdrop. Four layers, all compositor-friendly transforms or a single
-   background-position tick, and all periodic so the loops have no seam.
+   Home backdrop. Light from above and a floor to stand on, both faint enough
+   that the type is what you see first.
    --------------------------------------------------------------------------- */
 
-/* Faint grid, drifting one tile per cycle so the loop is invisible. */
+/* Faint grid, brightest behind the headline and gone by the fold. */
 .hero-grid {
   background-image:
-    linear-gradient(to right, #f1f1f3 1px, transparent 1px),
-    linear-gradient(to bottom, #f1f1f3 1px, transparent 1px);
-  background-size: 64px 64px;
+    linear-gradient(to right, #f4f4f5 1px, transparent 1px),
+    linear-gradient(to bottom, #f4f4f5 1px, transparent 1px);
+  background-size: 72px 72px;
   -webkit-mask-image: radial-gradient(
-    70rem 42rem at 50% 0%,
+    62rem 36rem at 50% 12%,
     #000,
-    transparent 75%
+    transparent 72%
   );
-  mask-image: radial-gradient(70rem 42rem at 50% 0%, #000, transparent 75%);
-  animation: grid-drift 26s linear infinite;
+  mask-image: radial-gradient(62rem 36rem at 50% 12%, #000, transparent 72%);
 }
 
-@keyframes grid-drift {
-  to {
-    background-position: 64px 64px;
-  }
-}
-
-/* Three pale blobs, blurred hard enough to read as one soft aurora. */
-.hero-aurora span {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(72px);
-  opacity: 0.5;
-  will-change: transform;
-}
-
-.hero-aurora span:nth-child(1) {
-  width: 42rem;
-  height: 42rem;
-  top: -20rem;
-  left: -12rem;
-  background: #c7d2fe;
-  animation: drift-a 23s ease-in-out infinite;
-}
-
-.hero-aurora span:nth-child(2) {
-  width: 36rem;
-  height: 36rem;
-  top: -16rem;
-  right: -10rem;
-  background: #bae6fd;
-  animation: drift-b 29s ease-in-out infinite;
-}
-
-.hero-aurora span:nth-child(3) {
-  width: 30rem;
-  height: 30rem;
-  top: 6rem;
-  left: 38%;
-  background: #ddd6fe;
-  animation: drift-c 19s ease-in-out infinite;
-}
-
-@keyframes drift-a {
-  50% {
-    transform: translate3d(7rem, 4rem, 0) scale(1.14);
-  }
-}
-
-@keyframes drift-b {
-  50% {
-    transform: translate3d(-6rem, 5rem, 0) scale(1.1);
-  }
-}
-
-@keyframes drift-c {
-  50% {
-    transform: translate3d(4rem, -5rem, 0) scale(1.16);
-  }
+/* Light from above only. The hero now ends where the footer starts, so anything
+   pooling at the bottom would be sliced by that edge and read as a smudge. */
+.hero-glow {
+  background: radial-gradient(
+    44rem 26rem at 50% -6%,
+    rgb(126 124 152 / 0.09),
+    transparent 70%
+  );
 }
 
 /* Follows the pointer. The component writes --spot-x/--spot-y. */
 .hero-spotlight {
   background: radial-gradient(
-    26rem 26rem at var(--spot-x, 50%) var(--spot-y, 35%),
-    rgb(99 102 241 / 0.12),
+    24rem 24rem at var(--spot-x, 50%) var(--spot-y, 35%),
+    rgb(112 110 145 / 0.1),
     transparent 70%
   );
 }
@@ -135,10 +102,29 @@ body {
   }
 }
 
+/* The lookup streams in after the header has painted, so it arrives on its own. */
+.rise {
+  animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Placeholder for the streamed lookup. */
+.skeleton {
+  background: linear-gradient(100deg, #f4f4f5 32%, #fafafa 50%, #f4f4f5 68%);
+  background-size: 220% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-grid,
-  .hero-aurora span,
-  .hero-stagger > * {
+  .hero-stagger > *,
+  .rise,
+  .skeleton {
     animation: none;
   }
 }

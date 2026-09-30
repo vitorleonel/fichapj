@@ -1,7 +1,22 @@
+import { Building2 } from "lucide-react";
+import Link from "next/link";
+
+/** The way back to an empty search, so it is a link and not decoration. */
 export function Logo() {
   return (
-    <span className="text-xl font-semibold tracking-tight text-zinc-900">
-      Ficha PJ
-    </span>
+    <Link
+      href="/"
+      className="inline-flex shrink-0 items-center gap-2.5 rounded-lg outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-900/25"
+    >
+      <span
+        className="grid size-8 shrink-0 place-items-center rounded-lg bg-zinc-900 text-white"
+        aria-hidden="true"
+      >
+        <Building2 className="size-4" />
+      </span>
+      <span className="text-lg font-semibold tracking-tight text-zinc-900">
+        Ficha PJ
+      </span>
+    </Link>
   );
 }
