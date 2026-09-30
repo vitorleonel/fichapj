@@ -178,7 +178,7 @@ def test_socios():
     assert socio["qualificacao_socio"] == {"codigo": "49", "descricao": "Sócio-Administrador"}
     assert socio["identificador_socio"] == {"codigo": "2", "descricao": "Pessoa física"}
     assert socio["pais"] == {"codigo": "105", "descricao": "BRASIL"}, "sócio sem país é do Brasil"
-    assert socio["faixa_etaria"] == "6", "a faixa etária has no legend, so the code stands"
+    assert socio["faixa_etaria"] == {"codigo": "6", "descricao": "51 a 60 anos"}
     assert "socio" not in socio, "the sort key is the table's, not the partner's"
 
 

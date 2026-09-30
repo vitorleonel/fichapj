@@ -51,6 +51,21 @@ IDENTIFICADOR_MATRIZ_FILIAL = {
     "2": "Filial",
 }
 
+# From the notes published alongside the Sócios dump, which is the only place the bands
+# appear — the layout file itself just names the field.
+FAIXA_ETARIA = {
+    "0": "Não se aplica",
+    "1": "0 a 12 anos",
+    "2": "13 a 20 anos",
+    "3": "21 a 30 anos",
+    "4": "31 a 40 anos",
+    "5": "41 a 50 anos",
+    "6": "51 a 60 anos",
+    "7": "61 a 70 anos",
+    "8": "71 a 80 anos",
+    "9": "Maiores de 80 anos",
+}
+
 EMPRESA_CODES = {
     "natureza_juridica": (naturezas, False),
     "qualificacao_responsavel": (qualificacoes, False),
@@ -67,12 +82,11 @@ ESTABELECIMENTO_CODES = {
     "situacao_cadastral": (SITUACAO_CADASTRAL, False),
 }
 
-# `faixa_etaria` is left as the dump's code: the layout publishes no legend for it, and a
-# made-up band would read as fact.
 SOCIO_CODES = {
     "identificador_socio": (IDENTIFICADOR_SOCIO, False),
     "qualificacao_socio": (qualificacoes, False),
     "qualificacao_representante_legal": (qualificacoes, False),
+    "faixa_etaria": (FAIXA_ETARIA, False),
     "pais": (paises, False),
 }
 
