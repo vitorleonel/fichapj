@@ -26,6 +26,87 @@ export const formatPhone = (ddd: string, number: string) => {
   return `(${digits.slice(0, 2)}) ${local.slice(0, -4)}-${local.slice(-4)}`;
 };
 
+/** The words that stay down when they land inside a name, as Portuguese writes them. */
+const CONNECTIVES = new Set([
+  "a",
+  "as",
+  "ao",
+  "aos",
+  "com",
+  "da",
+  "das",
+  "de",
+  "do",
+  "dos",
+  "e",
+  "em",
+  "na",
+  "nas",
+  "no",
+  "nos",
+  "o",
+  "os",
+  "para",
+  "por",
+]);
+
+/**
+ * `STEPY TECNOLOGIA LTDA` -> `Stepy Tecnologia Ltda`.
+ *
+ * The Receita stores every name and every street in capitals, which reads as shouting
+ * once it is on a page. A name that is genuinely an acronym comes out wrong — `IBM` is
+ * not recoverable from `IBM` — but that is rarer than the shouting.
+ */
+export const titleCase = (value: string) =>
+  value
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word, index) =>
+      index > 0 && CONNECTIVES.has(word)
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(" ");
+
+/**
+ * The country, unless it is the one the dump leaves implicit — an empty `pais` is Brazil,
+ * so printing it next to a Brazilian address says nothing.
+ */
+export const foreignCountry = (descricao?: string | null) =>
+  (descricao ?? "").toUpperCase() === "BRASIL" ? "" : (descricao ?? "");
+
+/** `ZENIRA DA SILVA MACEDO` -> `ZM`. A one-word name keeps its first two letters. */
+export const initials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+/**
+ * `STEPY TECNOLOGIA LTDA` -> `ST`. A company name ends in its legal form, so taking the
+ * last word would make the mark `SL` on nearly every Limitada.
+ */
+export const companyMark = (name: string) =>
+  initials(name.trim().split(/\s+/)[0] ?? "");
+
+/** `20100805` -> `16 anos`. Empty when there is no whole date to count from. */
+export const yearsSince = (value: string, now = new Date()) => {
+  if (value.length !== 8) return "";
+
+  // MMDD as one number orders the same as the calendar, so a birthday still ahead this
+  // year is a year not yet lived.
+  const today = (now.getMonth() + 1) * 100 + now.getDate();
+  const years =
+    now.getFullYear() -
+    Number(value.slice(0, 4)) -
+    (today < Number(value.slice(4, 8)) ? 1 : 0);
+
+  if (years < 1) return "";
+  return years === 1 ? "1 ano" : `${years} anos`;
+};
+
 const BRL = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
