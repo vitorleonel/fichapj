@@ -48,8 +48,9 @@ export default function Page() {
 
       <Section title="O que sai do seu navegador">
         <p>
-          O CNPJ consultado, e só ele. Ele vai no endereço da página —{" "}
-          <code>/39581412000106</code> — e é o que o servidor recebe para fazer
+          O CNPJ consultado, e só ele. Ele vai no endereço da página, no fim do
+          caminho — uma consulta chega ao servidor como{" "}
+          <code>/00000000000000</code> — e é o que o servidor recebe para fazer
           a consulta. A consulta em si parte de um servidor nosso, com uma
           credencial que nunca chega ao navegador.
         </p>
