@@ -12,13 +12,6 @@ const nextConfig: NextConfig = {
         destination: "/cnpj/:cnpj",
         permanent: true,
       },
-      // Anchored, because the host is matched as an unanchored regex.
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "^www\\.fichapj\\.com\\.br$" }],
-        destination: "https://fichapj.com.br/:path*",
-        permanent: true,
-      },
     ];
   },
 };
