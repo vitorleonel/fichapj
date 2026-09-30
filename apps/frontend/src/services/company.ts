@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 /** A code from the dump together with the description the API resolved for it. */
 export type Described = { codigo: string; descricao: string | null };
 
@@ -112,7 +114,15 @@ export async function lookupCompany(cnpj: string): Promise<LookupResult> {
   return { ok: true, company };
 }
 
-export function countActive(): number {
+/**
+ * The number in the bar. It lives in the Worker's environment, so it has to be read on
+ * the request: a page prerendered at build time ships whatever number the machine that
+ * built it happened to have, which is how the home came to show `42` from the local
+ * `.env.local` while the cnpj page showed the deployed figure.
+ */
+export async function countActive(): Promise<number> {
+  await connection();
+
   const count = Number(required("ACTIVE_COUNT"));
   if (!Number.isFinite(count)) throw new Error("ACTIVE_COUNT is not a number");
 

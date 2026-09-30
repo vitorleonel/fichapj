@@ -10,14 +10,14 @@ import { countActive } from "@/services/company";
  * Pass `search` on a page that is already showing one cnpj: the field comes back, so
  * the next lookup starts from here instead of from the home.
  */
-export function Header({
+export async function Header({
   className = "",
   search,
 }: {
   className?: string;
   search?: string;
 }) {
-  const active = countActive();
+  const active = await countActive();
 
   return (
     <header className={className}>
