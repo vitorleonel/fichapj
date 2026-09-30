@@ -102,29 +102,15 @@ button:not(:disabled) {
   }
 }
 
-/* The lookup streams in after the header has painted, so it arrives on its own. */
+/* The lookup arrives with the page rather than after it, so it settles on its own. */
 .rise {
   animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Placeholder for the streamed lookup. */
-.skeleton {
-  background: linear-gradient(100deg, #f4f4f5 32%, #fafafa 50%, #f4f4f5 68%);
-  background-size: 220% 100%;
-  animation: shimmer 1.6s linear infinite;
-}
-
-@keyframes shimmer {
-  to {
-    background-position: -220% 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-grid,
   .hero-stagger > *,
-  .rise,
-  .skeleton {
+  .rise {
     animation: none;
   }
 }
