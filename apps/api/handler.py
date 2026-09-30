@@ -45,6 +45,12 @@ IDENTIFICADOR_SOCIO = {
     "3": "Estrangeiro",
 }
 
+# ADE RFB 34/2007. Not the 0001 extension: that stopped meaning matriz in 2007.
+IDENTIFICADOR_MATRIZ_FILIAL = {
+    "1": "Matriz",
+    "2": "Filial",
+}
+
 EMPRESA_CODES = {
     "natureza_juridica": (naturezas, False),
     "qualificacao_responsavel": (qualificacoes, False),
@@ -52,6 +58,7 @@ EMPRESA_CODES = {
 }
 
 ESTABELECIMENTO_CODES = {
+    "identificador_matriz_filial": (IDENTIFICADOR_MATRIZ_FILIAL, False),
     "cnae_fiscal_principal": (cnaes, False),
     "cnae_fiscal_secundaria": (cnaes, True),
     "municipio": (municipios, False),
@@ -149,7 +156,13 @@ def _socios(cnpj_basico):
     """
     items = socios.query(KeyConditionExpression=Key("cnpj_basico").eq(cnpj_basico))["Items"]
 
-    return [_resolve(item, SOCIO_CODES) for item in items]
+    found = []
+    for item in items:
+        # The sort key tells two partners apart inside the table; it is not a fact about either.
+        item.pop("socio", None)
+        found.append(_resolve(item, SOCIO_CODES))
+
+    return found
 
 
 def handler(event, context):

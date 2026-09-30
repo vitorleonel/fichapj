@@ -129,6 +129,7 @@ def test_fixed_domain_without_the_code():
 
 def test_estabelecimento():
     estab = {
+        "identificador_matriz_filial": "1",
         "cnae_fiscal_principal": "6201501",
         "cnae_fiscal_secundaria": "4761001,9999999",
         "municipio": "7089",
@@ -138,6 +139,7 @@ def test_estabelecimento():
     }
     handler._resolve(estab, handler.ESTABELECIMENTO_CODES)
 
+    assert estab["identificador_matriz_filial"] == {"codigo": "1", "descricao": "Matriz"}
     assert estab["cnae_fiscal_principal"]["descricao"].startswith("Desenvolvimento")
     assert estab["municipio"] == {"codigo": "7089", "descricao": "SAO JOAQUIM DA BARRA"}
     assert estab["motivo_situacao_cadastral"] == {"codigo": "00", "descricao": "SEM MOTIVO"}
@@ -164,6 +166,7 @@ def test_socios():
                 "data_entrada_sociedade": "20100805",
                 "pais": "",
                 "faixa_etaria": "6",
+                "socio": "***903770**|ZENIRA DA SILVA MACEDO|49|20100805",
             }
         ]
     )
@@ -176,6 +179,7 @@ def test_socios():
     assert socio["identificador_socio"] == {"codigo": "2", "descricao": "Pessoa física"}
     assert socio["pais"] == {"codigo": "105", "descricao": "BRASIL"}, "sócio sem país é do Brasil"
     assert socio["faixa_etaria"] == "6", "a faixa etária has no legend, so the code stands"
+    assert "socio" not in socio, "the sort key is the table's, not the partner's"
 
 
 def test_socios_vazio():
