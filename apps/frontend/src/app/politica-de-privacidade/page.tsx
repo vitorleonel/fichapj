@@ -19,21 +19,39 @@ export default function Page() {
 
       <Section title="O que guardamos sobre você">
         <p>
-          Nada. O site não cria conta, não usa cookies e não grava nada no seu
-          navegador. Não há ferramenta de análise, de publicidade ou de
-          rastreamento, e nada do que você faz aqui é perfilado.
+          Nada que identifique você. O site não cria conta, não usa cookies e
+          não grava nada no seu navegador — nem em <code>localStorage</code>.
+          Não há publicidade nem rastreamento entre sites, e nada do que você
+          consulta aqui é perfilado.
+        </p>
+        <p>
+          A única medição que existe é a descrita abaixo, e ela não vem deste
+          site.
+        </p>
+      </Section>
+
+      <Section title="A medição da Cloudflare">
+        <p>
+          Como o site é hospedado pela Cloudflare, ela injeta um medidor de
+          audiência em toda página: o script <code>beacon.min.js</code>, servido
+          de <code>static.cloudflareinsights.com</code>. Ele não está no código
+          deste site — vem da borda da Cloudflare, e por isso não aparece em
+          nenhuma lista de dependências daqui.
+        </p>
+        <p>
+          O que ele registra é agrupado: visitas por página, de onde vieram, e o
+          desempenho de carregamento. País, sistema operacional e navegador
+          aparecem somados, não por visitante. Ele não usa cookies, não guarda
+          nada no navegador e não acompanha a mesma pessoa em outros sites.
         </p>
       </Section>
 
       <Section title="O que sai do seu navegador">
         <p>
-          O CNPJ consultado, e só ele. Ele vai no endereço da página —
-          <code className="mx-1 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs">
-            /39581412000106
-          </code>
-          — e é o que o servidor recebe para fazer a consulta. A consulta em si
-          parte de um servidor nosso, com uma credencial que nunca chega ao
-          navegador.
+          O CNPJ consultado, e só ele. Ele vai no endereço da página —{" "}
+          <code>/39581412000106</code> — e é o que o servidor recebe para fazer
+          a consulta. A consulta em si parte de um servidor nosso, com uma
+          credencial que nunca chega ao navegador.
         </p>
       </Section>
 
@@ -62,10 +80,10 @@ export default function Page() {
 
       <Section title="Com quem compartilhamos">
         <p>
-          Com ninguém. Nada é vendido, cedido ou usado para outra finalidade. O
-          único terceiro que vê algo além da infraestrutura é o Google Maps, e
-          somente se você clicar em “Ver no mapa” — nesse caso o endereço da
-          empresa é enviado ao Google.
+          Com ninguém. Nada é vendido, cedido ou usado para outra finalidade. A
+          medição fica com a própria Cloudflare, que é quem hospeda o site. O
+          Google Maps só entra em cena se você clicar em “Ver no mapa” — nesse
+          caso o endereço da empresa é enviado ao Google.
         </p>
       </Section>
 

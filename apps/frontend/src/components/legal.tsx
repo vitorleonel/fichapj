@@ -47,7 +47,9 @@ export function Section({
       <h2 className="text-base font-semibold tracking-tight text-zinc-900">
         {title}
       </h2>
-      <div className="flex flex-col gap-3 text-sm leading-relaxed text-zinc-700">
+      {/* Any `code` inside a section is dressed here, so a document does not have to
+          carry the same six classes on every identifier it names. */}
+      <div className="flex flex-col gap-3 text-sm leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-zinc-800">
         {children}
       </div>
     </section>
