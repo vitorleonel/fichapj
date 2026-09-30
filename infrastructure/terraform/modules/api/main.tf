@@ -19,7 +19,7 @@ locals {
       env = { TABLES = jsonencode(var.table_names) }
       policy = [{
         Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:BatchGetItem"]
+        Action   = ["dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:Query"]
         Resource = values(var.table_arns)
       }]
     }

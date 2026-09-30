@@ -20,6 +20,7 @@ os.environ.update(
             "motivos": "motivos",
             "qualificacoes_de_socios": "qualificacoes",
             "paises": "paises",
+            "socios": "socios",
         }
     ),
     AWS_DEFAULT_REGION="us-east-1",
@@ -48,11 +49,17 @@ handler._descriptions = lambda source, codes: (
 
 
 class _Table:
-    def __init__(self, item):
+    """One item for get_item, a list for the sócios query."""
+
+    def __init__(self, item=None, items=()):
         self._item = item
+        self._items = items
 
     def get_item(self, **kwargs):
         return {} if self._item is None else {"Item": self._item}
+
+    def query(self, **kwargs):
+        return {"Items": self._items}
 
 
 def test_not_found():
@@ -140,6 +147,46 @@ def test_estabelecimento():
         {"codigo": "4761001", "descricao": None},
         {"codigo": "9999999", "descricao": None},
     ], "a code with no row keeps its place"
+
+
+def test_socios():
+    """The sócios ride along with the company, codes resolved like anywhere else."""
+    handler.estabelecimentos = _Table({"cnpj": "39581412000106"})
+    handler.empresas = _Table({"cnpj_basico": "39581412"})
+    handler.socios = _Table(
+        items=[
+            {
+                "cnpj_basico": "39581412",
+                "identificador_socio": "2",
+                "nome_socio": "ZENIRA DA SILVA MACEDO",
+                "cnpj_cpf_socio": "***903770**",
+                "qualificacao_socio": "49",
+                "data_entrada_sociedade": "20100805",
+                "pais": "",
+                "faixa_etaria": "6",
+            }
+        ]
+    )
+
+    body = json.loads(handler.handler({"pathParameters": {"cnpj": "39581412000106"}}, None)["body"])
+    socio = body["socios"][0]
+
+    assert socio["nome_socio"] == "ZENIRA DA SILVA MACEDO", "free text is passed through"
+    assert socio["qualificacao_socio"] == {"codigo": "49", "descricao": "Sócio-Administrador"}
+    assert socio["identificador_socio"] == {"codigo": "2", "descricao": "Pessoa física"}
+    assert socio["pais"] == {"codigo": "105", "descricao": "BRASIL"}, "sócio sem país é do Brasil"
+    assert socio["faixa_etaria"] == "6", "a faixa etária has no legend, so the code stands"
+
+
+def test_socios_vazio():
+    """A company with no partners answers with an empty list, not a missing key."""
+    handler.estabelecimentos = _Table({"cnpj": "39581412000106"})
+    handler.empresas = _Table({"cnpj_basico": "39581412"})
+    handler.socios = _Table()
+
+    body = json.loads(handler.handler({"pathParameters": {"cnpj": "39581412000106"}}, None)["body"])
+
+    assert body["socios"] == []
 
 
 def test_empty():

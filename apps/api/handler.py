@@ -3,11 +3,13 @@ import os
 import re
 
 import boto3
+from boto3.dynamodb.conditions import Key
 
 TABLES = json.loads(os.environ["TABLES"])
 dynamodb = boto3.resource("dynamodb")
 empresas = dynamodb.Table(TABLES["empresas"])
 estabelecimentos = dynamodb.Table(TABLES["estabelecimentos"])
+socios = dynamodb.Table(TABLES["socios"])
 naturezas = dynamodb.Table(TABLES["naturezas_juridicas"])
 cnaes = dynamodb.Table(TABLES["cnaes"])
 municipios = dynamodb.Table(TABLES["municipios"])
@@ -35,6 +37,14 @@ SITUACAO_CADASTRAL = {
     "08": "Baixada",
 }
 
+# The sócio's cnpj_cpf comes masked from the dump, so this is the only thing that says whether
+# a partner is a person or a company.
+IDENTIFICADOR_SOCIO = {
+    "1": "Pessoa jurídica",
+    "2": "Pessoa física",
+    "3": "Estrangeiro",
+}
+
 EMPRESA_CODES = {
     "natureza_juridica": (naturezas, False),
     "qualificacao_responsavel": (qualificacoes, False),
@@ -50,8 +60,17 @@ ESTABELECIMENTO_CODES = {
     "situacao_cadastral": (SITUACAO_CADASTRAL, False),
 }
 
-# The code to read when a field is empty. The dump only fills `pais` for an address abroad, so
-# an empty one is a Brazilian address. Resolved through the table like any other code.
+# `faixa_etaria` is left as the dump's code: the layout publishes no legend for it, and a
+# made-up band would read as fact.
+SOCIO_CODES = {
+    "identificador_socio": (IDENTIFICADOR_SOCIO, False),
+    "qualificacao_socio": (qualificacoes, False),
+    "qualificacao_representante_legal": (qualificacoes, False),
+    "pais": (paises, False),
+}
+
+# The code to read when a field is empty. The dump fills `pais` only for an address abroad or a
+# foreign sócio, so an empty one is Brazil. Resolved through the table like any other code.
 DEFAULT_CODES = {"pais": "105"}
 
 # batch_get_item takes 100 keys, and refuses more instead of truncating.
@@ -122,6 +141,17 @@ def _resolve(item, fields):
     return item
 
 
+def _socios(cnpj_basico):
+    """Every sócio of a company, codes resolved.
+
+    cnpj_basico is the partition key, so this is one query and not a scan. The reply is left
+    unpaged: a page holds a megabyte of sócios, far past any real cap table.
+    """
+    items = socios.query(KeyConditionExpression=Key("cnpj_basico").eq(cnpj_basico))["Items"]
+
+    return [_resolve(item, SOCIO_CODES) for item in items]
+
+
 def handler(event, context):
     # Uppercased, so a cnpj typed in lower case still finds the row the dump stored.
     cnpj = (event.get("pathParameters") or {}).get("cnpj", "").upper()
@@ -143,4 +173,11 @@ def handler(event, context):
     _resolve(empresa, EMPRESA_CODES)
     _resolve(estabelecimento, ESTABELECIMENTO_CODES)
 
-    return _response(200, {"empresa": empresa, "estabelecimento": estabelecimento})
+    return _response(
+        200,
+        {
+            "empresa": empresa,
+            "estabelecimento": estabelecimento,
+            "socios": _socios(cnpj_basico),
+        },
+    )
