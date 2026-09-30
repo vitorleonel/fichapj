@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { LegalPage, Section } from "@/components/legal";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade — Ficha PJ",
+  title: "Política de Privacidade",
+  alternates: { canonical: "/politica-de-privacidade" },
 };
 
 export default function Page() {

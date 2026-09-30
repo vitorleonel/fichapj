@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Result } from "@/components/result";
 import { formatCnpj, isComplete, onlyAlnum } from "@/lib/cnpj";
 import { formatDate, titleCase } from "@/lib/format";
+import { isMissing } from "@/lib/lookup";
 import { lookupCompany } from "@/services/company";
 
 /**
@@ -18,11 +19,24 @@ import { lookupCompany } from "@/services/company";
  */
 export async function generateMetadata({
   params,
-}: PageProps<"/[cnpj]">): Promise<Metadata> {
+}: PageProps<"/cnpj/[cnpj]">): Promise<Metadata> {
   const cnpj = onlyAlnum((await params).cnpj);
+
+  // Before the lookup, so half an address never costs one.
+  if (!isComplete(cnpj)) return { title: "CNPJ não encontrado" };
+
   const result = await lookupCompany(cnpj);
 
-  if (!result.ok) return { title: "CNPJ não encontrado — Ficha PJ" };
+  if (!result.ok) {
+    return {
+      title: isMissing(result)
+        ? "CNPJ não encontrado"
+        : "Consulta indisponível",
+      // An unreachable API answers 200, and a stub is what gets indexed if a crawler
+      // arrives during an outage.
+      robots: { index: false },
+    };
+  }
 
   const { empresa, estabelecimento } = result.company;
 
@@ -47,16 +61,19 @@ export async function generateMetadata({
   return {
     title: `${titleCase(empresa.razao_social ?? "")} — CNPJ ${formatCnpj(cnpj)}`,
     description,
+    alternates: { canonical: `/cnpj/${cnpj}` },
   };
 }
 
-export default async function Page({ params }: PageProps<"/[cnpj]">) {
+export default async function Page({ params }: PageProps<"/cnpj/[cnpj]">) {
   const segment = (await params).cnpj;
   const cnpj = onlyAlnum(segment);
 
-  // Punctuation in the address is the reader's business, but half a cnpj is not a page
-  // we have. A second segment never reaches here — no route matches it.
-  if (!isComplete(segment)) notFound();
+  if (!isComplete(cnpj)) notFound();
+
+  // One address per company: the punctuated spelling was a second URL carrying the same
+  // content, with nothing to tell a search engine which of the two to keep.
+  if (segment !== cnpj) permanentRedirect(`/cnpj/${cnpj}`);
 
   return (
     // The tint is what turns the panels into cards; on white they were only outlined.

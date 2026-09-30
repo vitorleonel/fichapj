@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { LegalPage, Section } from "@/components/legal";
 
 export const metadata: Metadata = {
-  title: "Termos de Uso — Ficha PJ",
+  title: "Termos de Uso",
+  alternates: { canonical: "/termos-de-uso" },
 };
 
 export default function Page() {

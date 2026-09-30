@@ -6,10 +6,10 @@ import {
   MapPin,
   Phone,
   Printer,
-  SearchX,
   Store,
   WifiOff,
 } from "lucide-react";
+import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { CopyButton } from "@/components/copy-button";
@@ -27,6 +27,7 @@ import {
   titleCase,
   yearsSince,
 } from "@/lib/format";
+import { isMissing } from "@/lib/lookup";
 import {
   type Company,
   type Described,
@@ -192,39 +193,23 @@ function Identity({
   );
 }
 
-/** Nothing to show, for one of the two reasons the API has. */
-function Unavailable({ status, cnpj }: { status: number; cnpj: string }) {
-  const missing = status === 404;
-
+/** The API being unreachable, which is not a company that does not exist. */
+function Unavailable() {
   return (
     <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white px-7 py-12 text-center shadow-xs">
       <span
         className="mx-auto grid size-12 place-items-center rounded-2xl bg-zinc-100 text-zinc-500"
         aria-hidden="true"
       >
-        {missing ? (
-          <SearchX className="size-5" />
-        ) : (
-          <WifiOff className="size-5" />
-        )}
+        <WifiOff className="size-5" />
       </span>
 
       <h1 className="mt-5 text-xl font-semibold tracking-tight text-zinc-900">
-        {missing
-          ? "Nenhuma empresa com esse CNPJ"
-          : "Não foi possível consultar agora"}
+        Não foi possível consultar agora
       </h1>
 
       <p className="mt-2 text-sm text-pretty text-zinc-600">
-        {missing ? (
-          <>
-            A consulta não encontrou o{" "}
-            <span className="font-mono">{formatCnpj(cnpj)}</span>. Confira os
-            dígitos — um CNPJ tem 14 posições.
-          </>
-        ) : (
-          "A consulta não respondeu. Tente de novo em instantes."
-        )}
+        A consulta não respondeu. Tente de novo em instantes.
       </p>
     </div>
   );
@@ -233,7 +218,11 @@ function Unavailable({ status, cnpj }: { status: number; cnpj: string }) {
 export async function Result({ cnpj }: { cnpj: string }) {
   const result = await lookupCompany(cnpj);
 
-  if (!result.ok) return <Unavailable status={result.status} cnpj={cnpj} />;
+  if (!result.ok) {
+    if (isMissing(result)) notFound();
+
+    return <Unavailable />;
+  }
 
   const { empresa, estabelecimento: estab, socios = [] } = result.company;
 

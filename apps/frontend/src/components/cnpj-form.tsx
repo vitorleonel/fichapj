@@ -49,7 +49,7 @@ export function CnpjForm({
           return;
         }
 
-        router.push(`/${onlyAlnum(value)}`);
+        router.push(`/cnpj/${onlyAlnum(value)}`);
       }}
     >
       <div

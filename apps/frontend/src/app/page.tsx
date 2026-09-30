@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
+
 import { CnpjForm } from "@/components/cnpj-form";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Spotlight } from "@/components/spotlight";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 /** The way in. Nothing to look up yet, so there is nothing here but the field. */
 export default function Home() {

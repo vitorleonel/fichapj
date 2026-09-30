@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { SITE } from "@/lib/site";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,7 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ficha PJ",
+  metadataBase: new URL(SITE),
+
+  // The template carries the brand, so a page names only itself.
+  title: {
+    default: "Consulta de CNPJ — Ficha PJ",
+    template: "%s — Ficha PJ",
+  },
   description:
     "Consulte o CNPJ de qualquer empresa e veja situação, sócios, endereço e atividade.",
 };
