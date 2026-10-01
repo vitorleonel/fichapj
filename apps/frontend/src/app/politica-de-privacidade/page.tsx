@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <LegalPage title="Política de Privacidade" updated="30 de setembro de 2026">
+    <LegalPage title="Política de Privacidade" updated="1º de outubro de 2026">
       <Section title="O que este site faz">
         <p>
           Você digita um CNPJ e recebe a ficha pública daquela empresa: situação
@@ -52,8 +52,8 @@ export default function Page() {
           O CNPJ consultado, e só ele. Ele vai no endereço da página, no fim do
           caminho — uma consulta chega ao servidor como{" "}
           <code>/00000000000000</code> — e é o que o servidor recebe para fazer
-          a consulta. A consulta em si parte de um servidor nosso, com uma
-          credencial que nunca chega ao navegador.
+          a consulta. A consulta em si parte de um servidor nosso: o navegador
+          nunca fala direto com a API.
         </p>
       </Section>
 
@@ -77,6 +77,11 @@ export default function Page() {
           aberta do CNPJ, que a Receita Federal publica. Os nomes dos sócios são
           dados pessoais, mas já são publicados pela Receita nessa base — este
           site apenas reproduz o que está lá.
+        </p>
+        <p>
+          Com uma exceção, e ela diminui o que sai daqui: o CPF ou CNPJ do sócio
+          e do representante legal. A Receita os publica com o meio em
+          asteriscos, e mesmo assim este site não os mostra.
         </p>
       </Section>
 

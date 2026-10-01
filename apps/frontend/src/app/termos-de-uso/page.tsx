@@ -9,11 +9,16 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <LegalPage title="Termos de Uso" updated="30 de setembro de 2026">
+    <LegalPage title="Termos de Uso" updated="1º de outubro de 2026">
       <Section title="O que este site é">
         <p>
           Uma consulta à base aberta do CNPJ. Você digita um CNPJ e vê a ficha
           pública daquela empresa. É gratuito e não exige cadastro.
+        </p>
+        <p>
+          Os mesmos dados saem por uma API pública, também sem chave e sem
+          cadastro. O formato dela está em <code>/api</code>, e estes termos
+          valem igual para quem consulta por lá.
         </p>
       </Section>
 
