@@ -4,17 +4,16 @@ import { connection } from "next/server";
 export type Described = { codigo: string; descricao: string | null };
 
 /**
- * One partner. `cnpj_cpf_socio` arrives masked — the Receita publishes the middle as
- * asterisks — so `identificador_socio` is what says whether this is a person or a company.
+ * One partner. The API leaves out the partner's and the representative's documents — the dump
+ * masks the middle of both — so `identificador_socio` is what says whether this is a person or
+ * a company.
  */
 export type Socio = {
   identificador_socio: Described;
   nome_socio: string;
-  cnpj_cpf_socio: string;
   qualificacao_socio: Described;
   data_entrada_sociedade: string;
   pais: Described;
-  representante_legal: string;
   nome_representante: string;
   qualificacao_representante_legal: Described;
   faixa_etaria: Described;

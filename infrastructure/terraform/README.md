@@ -52,7 +52,10 @@ In floci the API answers on the edge path:
 curl "http://localhost:4566/execute-api/$(tofu output -raw api_id)/v1/cnpj/19131243000197"
 ```
 
-`GET /v1/cnpj/{cnpj}` returns `{"empresa": ..., "estabelecimento": ...}`, one lookup per table.
+`GET /v1/cnpj/{cnpj}` returns `{"empresa": ..., "estabelecimento": ..., "socios": [...]}`, one
+lookup per table. The documents in `socios` — the partner's `cnpj_cpf_socio` and the
+representative's `representante_legal` — are dropped on the way out: the dump masks the middle
+of both, and on a public API a masked document only looks like a leak.
 
 A field holding a code is swapped for `{codigo, descricao}` — a list of them when the dump packs
 several into one field, as `cnae_fiscal_secundaria` does. `EMPRESA_CODES` and

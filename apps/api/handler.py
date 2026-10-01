@@ -37,8 +37,8 @@ SITUACAO_CADASTRAL = {
     "08": "Baixada",
 }
 
-# The sócio's cnpj_cpf comes masked from the dump, so this is the only thing that says whether
-# a partner is a person or a company.
+# The document that would say whether a partner is a person or a company is dropped below, so
+# this is what is left saying it.
 IDENTIFICADOR_SOCIO = {
     "1": "Pessoa jurídica",
     "2": "Pessoa física",
@@ -174,6 +174,10 @@ def _socios(cnpj_basico):
     for item in items:
         # The sort key tells two partners apart inside the table; it is not a fact about either.
         item.pop("socio", None)
+        # The partner's and the representative's documents. The dump masks the middle, and the
+        # API is public, so neither leaves here.
+        for field in ("cnpj_cpf_socio", "representante_legal"):
+            item.pop(field, None)
         found.append(_resolve(item, SOCIO_CODES))
 
     return found

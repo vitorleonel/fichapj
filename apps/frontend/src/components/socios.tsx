@@ -38,9 +38,6 @@ function SocioCard({ socio }: { socio: Socio }) {
           {formatDate(socio.data_entrada_sociedade)}
         </Field>
 
-        {/* The document stays out, even masked: the Receita publishes the middle as
-            asterisks, so what is left identifies nobody and only looks like a leak. */}
-
         {/* Only people carry a band, and "não se aplica" is a line that says nothing. */}
         {faixa && faixa !== NAO_SE_APLICA && (
           <Field label="Faixa etária">{faixa}</Field>
@@ -89,7 +86,7 @@ export function Socios({ socios }: { socios: Socio[] }) {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {socios.map((socio) => (
             <SocioCard
-              key={`${socio.nome_socio}-${socio.data_entrada_sociedade}-${socio.cnpj_cpf_socio}`}
+              key={`${socio.nome_socio}-${socio.data_entrada_sociedade}`}
               socio={socio}
             />
           ))}

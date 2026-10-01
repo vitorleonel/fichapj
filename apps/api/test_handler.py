@@ -162,6 +162,7 @@ def test_socios():
                 "identificador_socio": "2",
                 "nome_socio": "ZENIRA DA SILVA MACEDO",
                 "cnpj_cpf_socio": "***903770**",
+                "representante_legal": "***441992**",
                 "qualificacao_socio": "49",
                 "data_entrada_sociedade": "20100805",
                 "pais": "",
@@ -180,6 +181,8 @@ def test_socios():
     assert socio["pais"] == {"codigo": "105", "descricao": "BRASIL"}, "sócio sem país é do Brasil"
     assert socio["faixa_etaria"] == {"codigo": "6", "descricao": "51 a 60 anos"}
     assert "socio" not in socio, "the sort key is the table's, not the partner's"
+    assert "cnpj_cpf_socio" not in socio, "a document, masked or not, never leaves the API"
+    assert "representante_legal" not in socio, "nem o do representante"
 
 
 def test_socios_vazio():
