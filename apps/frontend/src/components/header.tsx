@@ -21,7 +21,7 @@ export async function Header({
 
   return (
     <header className={className}>
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-5 sm:px-10 sm:py-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3.5 sm:px-10 sm:py-4.5">
         <Logo />
 
         <p className="ml-auto text-sm text-zinc-500 md:order-3">
