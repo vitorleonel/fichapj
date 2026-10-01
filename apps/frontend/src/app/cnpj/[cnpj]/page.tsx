@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Result } from "@/components/result";
+import { ResultSkeleton } from "@/components/result-skeleton";
 import { formatCnpj, isComplete, onlyAlnum } from "@/lib/cnpj";
 import { formatDate, titleCase } from "@/lib/format";
 import { isMissing } from "@/lib/lookup";
@@ -76,15 +78,13 @@ export default async function Page({ params }: PageProps<"/cnpj/[cnpj]">) {
   if (segment !== cnpj) permanentRedirect(`/cnpj/${cnpj}`);
 
   return (
-    // The tint is what turns the panels into cards; on white they were only outlined.
     <div className="flex min-h-dvh flex-col bg-zinc-50">
       <Header search={cnpj} />
 
-      {/* No suspense boundary: the metadata above already waits on the same lookup before
-          the head can be written, so nothing would be gained by holding the body back —
-          only a page whose contents arrive as a script instead of as markup. */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 sm:px-10 sm:py-12">
-        <Result cnpj={cnpj} />
+        <Suspense fallback={<ResultSkeleton />}>
+          <Result cnpj={cnpj} />
+        </Suspense>
       </main>
 
       <Footer />

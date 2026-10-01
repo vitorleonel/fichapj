@@ -1,7 +1,8 @@
 "use client";
 
+import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 
 import { formatCnpj, isComplete, onlyAlnum } from "@/lib/cnpj";
 
@@ -34,6 +35,7 @@ export function CnpjForm({
   const router = useRouter();
   const field = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(formatCnpj(initialCnpj));
+  const [pending, startTransition] = useTransition();
   const ready = isComplete(value);
   const style = SIZES[size];
 
@@ -49,7 +51,8 @@ export function CnpjForm({
           return;
         }
 
-        router.push(`/cnpj/${onlyAlnum(value)}`);
+        // The transition is what holds `pending` true for the whole navigation.
+        startTransition(() => router.push(`/cnpj/${onlyAlnum(value)}`));
       }}
     >
       <div
@@ -69,9 +72,23 @@ export function CnpjForm({
 
         <button
           type="submit"
-          className={`shrink-0 bg-zinc-900 text-sm font-medium text-white transition outline-hidden hover:bg-zinc-800 focus-visible:ring-4 focus-visible:ring-zinc-900/25 ${style.button}`}
+          aria-busy={pending}
+          className={`grid shrink-0 place-items-center bg-zinc-900 text-sm font-medium text-white transition outline-hidden hover:bg-zinc-800 focus-visible:ring-4 focus-visible:ring-zinc-900/25 ${style.button}`}
         >
-          Consultar
+          {/* One cell, both: the hidden word still sets the width, so the spinner
+              cannot resize the button under the pointer that clicked it. */}
+          <span
+            className={`col-start-1 row-start-1 ${pending ? "opacity-0" : ""}`}
+          >
+            Consultar
+          </span>
+
+          {pending && (
+            <LoaderCircle
+              className="col-start-1 row-start-1 size-4 animate-spin motion-reduce:animate-none"
+              aria-hidden="true"
+            />
+          )}
         </button>
       </div>
     </form>
