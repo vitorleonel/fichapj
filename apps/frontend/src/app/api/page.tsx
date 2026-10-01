@@ -7,11 +7,17 @@ import { LegalPage, Section } from "@/components/legal";
 export const metadata: Metadata = {
   title: "API pública",
   description:
-    "A mesma consulta do site, em JSON: uma rota, sem chave e sem cadastro. O formato da resposta, os campos, os erros e o limite de uso.",
+    "A mesma consulta do site, em JSON: uma rota, sem chave e sem cadastro. O formato da resposta, os campos, os erros, o limite de uso — e o mesmo em MCP, para agentes.",
   alternates: { canonical: "/api" },
 };
 
 const REQUEST = `curl "https://api.fichapj.com.br/cnpj/19131243000197"`;
+
+const MCP = `{
+  "mcpServers": {
+    "fichapj": { "url": "https://fichapj.com.br/mcp" }
+  }
+}`;
 
 const RESPONSE = `{
   "empresa": {
@@ -377,6 +383,25 @@ export default function Page() {
         <p>
           A API não manda cabeçalhos CORS, então chame do seu servidor. Do
           navegador, uma página de outro domínio não consegue ler a resposta.
+        </p>
+      </Section>
+
+      <Section title="MCP">
+        <p>
+          A mesma consulta, como ferramenta de agente:{" "}
+          <code>https://fichapj.com.br/mcp</code>, um servidor MCP remoto. Uma
+          ferramenta só, <code>lookup_cnpj</code>, que aceita o CNPJ com ou sem
+          pontuação e devolve o mesmo JSON da rota acima — sem chave, como o
+          resto.
+        </p>
+        <p>
+          Em qualquer cliente MCP, aponte a URL acima onde ele guarda os
+          servidores. O formato que quase todos usam:
+        </p>
+        <Code>{MCP}</Code>
+        <p>
+          O MCP entra na mesma fila de dez requisições por segundo — não é cota
+          à parte.
         </p>
       </Section>
 

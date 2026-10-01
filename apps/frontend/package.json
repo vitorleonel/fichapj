@@ -13,10 +13,12 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.2.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
