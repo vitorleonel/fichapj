@@ -81,15 +81,12 @@ function required(name: string): string {
 }
 
 /**
- * The only place that knows how to reach the API. Runs on the server, so the
- * token never reaches the browser and there is no CORS to negotiate.
- *
- * A missing token and a dead network read the same to the caller: no answer.
+ * The only place that knows how to reach the API. It runs on the server, so the
+ * browser talks to Next and there is no CORS to negotiate.
  */
 async function api(path: string, revalidate: number): Promise<Response | null> {
   try {
     return await fetch(`${required("API_URL")}${path}`, {
-      headers: { Authorization: required("API_TOKEN") },
       next: { revalidate },
     });
   } catch (error) {

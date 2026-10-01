@@ -1,18 +1,5 @@
 locals {
-  # The authorizer is a function of its own so the gateway turns the request away
-  # before the API function runs. Each function writes down only the permissions its
-  # own route needs: the lookup reads a single row and never the token, the authorizer
-  # reads the token and can never touch a table.
   functions = {
-    authorizer = {
-      handler = "authorizer.handler"
-      env     = { TOKEN_SECRET_ARN = aws_secretsmanager_secret.token.arn }
-      policy = [{
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
-        Resource = [aws_secretsmanager_secret.token.arn]
-      }]
-    }
     handler = {
       handler = "handler.handler"
       # The whole map, so a new table in the handler needs no change here.
@@ -26,15 +13,6 @@ locals {
   }
 
   domain_count = var.domain_name == null ? 0 : 1
-}
-
-# Only the container. The value goes in through the CLI, so it never reaches the
-# state file — Terraform stores every argument of every resource it manages.
-resource "aws_secretsmanager_secret" "token" {
-  name = "${var.name}-token"
-
-  # 0 deletes it on destroy instead of reserving the name for 30 days.
-  recovery_window_in_days = 0
 }
 
 # One package holds every function, so they always run the same commit.
@@ -90,7 +68,7 @@ resource "aws_lambda_function" "main" {
   filename         = data.archive_file.lambda.output_path
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
-  # The default 3s is below what a cold authorizer needs for its secret read.
+  # The default 3s is below a cold start plus the table reads.
   timeout = 10
 
   environment {
@@ -114,23 +92,11 @@ resource "aws_api_gateway_resource" "cnpj_id" {
   path_part   = "{cnpj}"
 }
 
-# A TOKEN authorizer reads the Authorization header, so there is no identity source to set.
-resource "aws_api_gateway_authorizer" "token" {
-  name           = "${var.name}-token"
-  rest_api_id    = aws_api_gateway_rest_api.main.id
-  type           = "TOKEN"
-  authorizer_uri = aws_lambda_function.main["authorizer"].invoke_arn
-
-  # No caching, so a rotated token takes effect on the next request.
-  authorizer_result_ttl_in_seconds = 0
-}
-
 resource "aws_api_gateway_method" "cnpj" {
   rest_api_id   = aws_api_gateway_rest_api.main.id
   resource_id   = aws_api_gateway_resource.cnpj_id.id
   http_method   = "GET"
-  authorization = "CUSTOM"
-  authorizer_id = aws_api_gateway_authorizer.token.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "cnpj" {
@@ -142,12 +108,16 @@ resource "aws_api_gateway_integration" "cnpj" {
   uri                     = aws_lambda_function.main["handler"].invoke_arn
 }
 
-resource "aws_lambda_permission" "authorizer" {
-  statement_id  = "apigateway-authorizer"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.main["authorizer"].function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/authorizers/${aws_api_gateway_authorizer.token.id}"
+# One budget for the whole route — the site shares it with everyone else.
+resource "aws_api_gateway_method_settings" "cnpj" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  stage_name  = aws_api_gateway_stage.main.stage_name
+  method_path = "cnpj/{cnpj}/GET"
+
+  settings {
+    throttling_rate_limit  = 10
+    throttling_burst_limit = 20
+  }
 }
 
 resource "aws_lambda_permission" "handler" {
@@ -179,7 +149,6 @@ resource "aws_api_gateway_deployment" "main" {
       aws_api_gateway_resource.cnpj_id.id,
       aws_api_gateway_method.cnpj.id,
       aws_api_gateway_integration.cnpj.id,
-      aws_api_gateway_authorizer.token.id,
       aws_api_gateway_gateway_response.not_found.id,
     ]))
   }

@@ -15,7 +15,3 @@ output "acm_validation_records" {
 output "domain_cname_target" {
   value = module.api.domain_cname_target
 }
-
-output "token_secret_name" {
-  value = module.api.token_secret_name
-}

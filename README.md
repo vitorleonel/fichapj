@@ -26,7 +26,7 @@ docker compose up -d
 ```
 
 The emulator's dashboard is on <http://localhost:3001> and its AWS endpoints on
-<http://localhost:4566>. Port 3000 is left free for the frontend (step 5). Everything it stores
+<http://localhost:4566>. Port 3000 is left free for the frontend (step 4). Everything it stores
 lands in `./data` (`docker compose down && rm -rf data` is the reset — the tables go with it).
 
 ### 2. Create the tables, the Lambdas and the API
@@ -37,30 +37,16 @@ tofu init
 tofu apply
 ```
 
-### 3. Set the API token
-
-Terraform creates the secret container but never its value, so the token stays out of the state
-file. Set it here, in the same directory:
+### 3. Call it
 
 ```bash
-AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 \
-  aws --endpoint-url http://localhost:4566 secretsmanager put-secret-value \
-  --secret-id "$(tofu output -raw token_secret_name)" --secret-string local-dev-token
-```
-
-Floci takes any credentials; `test`/`test` is the convention.
-
-### 4. Call it
-
-```bash
-curl -H "Authorization: local-dev-token" \
-  "http://localhost:4566/execute-api/$(tofu output -raw api_id)/v1/cnpj/19131243000197"
+curl "http://localhost:4566/execute-api/$(tofu output -raw api_id)/v1/cnpj/19131243000197"
 ```
 
 `{"message": "CNPJ not found."}` with a `404` is the expected answer on a fresh database — the
-tables are empty until step 6. A missing or wrong token is a `403`.
+tables are empty until step 5.
 
-### 5. Run the frontend
+### 4. Run the frontend
 
 ```bash
 cd apps/frontend
@@ -68,26 +54,22 @@ npm install
 npm run dev
 ```
 
-On <http://localhost:3000>. It needs the API from steps 2 and 3 — the browser talks to Next, and
-Next talks to the emulator from the server, so the token never leaves the machine.
+On <http://localhost:3000>. It needs the API from step 2 — the browser talks to Next, which talks
+to the emulator from the server.
 
 `.env.local` is not in the repo, so create it:
 
 ```bash
 API_URL=http://localhost:4566/execute-api/<api_id>/v1   # `tofu output -raw api_id` in envs/local
-API_TOKEN=local-dev-token                               # the value step 3 put in the secret
 ACTIVE_COUNT=42                                         # the navbar number, see below
 ```
 
-The token only has to match what the authorizer checks, which is the secret container step 3
-filled.
-
-`ACTIVE_COUNT` is the number in the navbar, and all three are required — a missing one fails the
-page, so the mistake shows up on the first render instead of leaving a hole in it.
+Both are required — a missing one fails the page, so the mistake shows up on the first render
+instead of leaving a hole in it.
 [scripts/README.md](scripts/README.md) has the command that derives the count from the dump; locally,
 run it against your own `out/` and use whatever it prints.
 
-### 6. Load the data (optional)
+### 5. Load the data (optional)
 
 Back at the repo root:
 
@@ -97,7 +79,7 @@ make load      # push the csvs into the local DynamoDB
 ```
 
 Both need the dumps in `scripts/local_add_headers/in/` first — see
-[scripts/README.md](scripts/README.md) for where to get them. Then repeat step 4 with a real CNPJ,
+[scripts/README.md](scripts/README.md) for where to get them. Then repeat step 3 with a real CNPJ,
 or search it in the frontend.
 
 ## Further

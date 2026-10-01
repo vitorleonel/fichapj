@@ -18,8 +18,7 @@ test("a lookup that failed is not a missing company", () => {
   assert.equal(isMissing(failed(502)), false);
 });
 
-// The one that matters: true here and a rotated token 404s every page in the site.
-test("our own token being wrong is not a missing company", () => {
+test("the API refusing the request is not a missing company", () => {
   assert.equal(isMissing(failed(403)), false);
 });
 

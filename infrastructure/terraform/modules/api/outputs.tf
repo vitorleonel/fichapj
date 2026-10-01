@@ -21,7 +21,3 @@ output "acm_validation_records" {
 output "domain_cname_target" {
   value = var.domain_name == null ? null : aws_api_gateway_domain_name.api[0].regional_domain_name
 }
-
-output "token_secret_name" {
-  value = aws_secretsmanager_secret.token.name
-}
