@@ -82,6 +82,32 @@ The three functions share the `apps/api` directory — edit it and `tofu apply` 
 updates them. `apps/api/test_handler.py` checks the code resolution against a stub table, no AWS
 involved: `uv run apps/api/test_handler.py`.
 
+## The API domain
+
+`api.fichapj.com.br` is a custom domain on the gateway, not a CNAME to the invoke URL: the
+certificate on that host covers only `*.execute-api.us-east-1.amazonaws.com`, so the handshake
+fails before a request is ever sent. The domain gets a certificate of its own, validated by DNS,
+and the DNS provider has no Terraform provider here — so the first apply stops after the
+certificate, on purpose.
+
+```bash
+tofu apply -target=module.api.aws_acm_certificate.api
+tofu output -json acm_validation_records
+```
+
+Create that CNAME at Cloudflare, **DNS only**. A proxied record is not resolvable by ACM and the
+certificate stays in `PENDING_VALIDATION` forever. Then:
+
+```bash
+tofu apply
+tofu output -raw domain_cname_target
+```
+
+Point a second CNAME, `api`, at that target — DNS only as well, the certificate is already the
+API's own. No base path is mapped, so the stage name stays out of the public URL and lookups
+answer at `https://api.fichapj.com.br/cnpj/<cnpj>`. `tofu output -raw api_url` is what goes in
+the Worker's `API_URL`. The execute-api address keeps working.
+
 ## The frontend
 
 `apps/frontend` is not deployed from this directory. It is an ordinary Next.js server — `npm run

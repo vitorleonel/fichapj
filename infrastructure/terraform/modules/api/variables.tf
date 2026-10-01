@@ -18,6 +18,12 @@ variable "table_arns" {
   type        = map(string)
 }
 
+variable "domain_name" {
+  description = "Public hostname for the API; null serves the execute-api address alone"
+  type        = string
+  default     = null
+}
+
 variable "lambda_environment" {
   description = "Extra environment variables for the functions, e.g. the emulator endpoint"
   type        = map(string)

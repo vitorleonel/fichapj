@@ -24,6 +24,8 @@ locals {
       }]
     }
   }
+
+  domain_count = var.domain_name == null ? 0 : 1
 }
 
 # Only the container. The value goes in through the CLI, so it never reaches the
@@ -191,4 +193,40 @@ resource "aws_api_gateway_stage" "main" {
   rest_api_id   = aws_api_gateway_rest_api.main.id
   deployment_id = aws_api_gateway_deployment.main.id
   stage_name    = "v1"
+}
+
+# The execute-api certificate covers only *.execute-api.<region>.amazonaws.com.
+resource "aws_acm_certificate" "api" {
+  count = local.domain_count
+
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+}
+
+# Waits for the CNAME created by hand at the DNS provider.
+resource "aws_acm_certificate_validation" "api" {
+  count = local.domain_count
+
+  certificate_arn = aws_acm_certificate.api[0].arn
+}
+
+# The name the CNAME points at — not the invoke URL.
+resource "aws_api_gateway_domain_name" "api" {
+  count = local.domain_count
+
+  domain_name              = var.domain_name
+  regional_certificate_arn = aws_acm_certificate_validation.api[0].certificate_arn
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}
+
+# Without it the domain answers 403.
+resource "aws_api_gateway_base_path_mapping" "api" {
+  count = local.domain_count
+
+  api_id      = aws_api_gateway_rest_api.main.id
+  stage_name  = aws_api_gateway_stage.main.stage_name
+  domain_name = aws_api_gateway_domain_name.api[0].domain_name
 }

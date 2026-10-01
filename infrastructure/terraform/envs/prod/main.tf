@@ -10,7 +10,8 @@ module "dynamodb" {
 module "api" {
   source = "../../modules/api"
 
-  name = "fichapj-cnpjs-api"
+  name        = "fichapj-cnpjs-api"
+  domain_name = "api.fichapj.com.br"
 
   source_dir  = "${path.root}/../../../../apps/api"
   table_names = module.dynamodb.names
