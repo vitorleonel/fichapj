@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const LINKS = [
+  { href: "/api", label: "API" },
   { href: "/politica-de-privacidade", label: "Política de Privacidade" },
   { href: "/termos-de-uso", label: "Termos de Uso" },
 ];

@@ -12,6 +12,7 @@ import { SITE } from "@/lib/site";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE },
+    { url: `${SITE}/api` },
     { url: `${SITE}/politica-de-privacidade` },
     { url: `${SITE}/termos-de-uso` },
   ];
